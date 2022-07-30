@@ -7,7 +7,7 @@
 import numpy as np
 import time
 
-duneuropy_path='/home/anne/duneuro/build-release/duneuro-py/src'
+duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
 import sys
 sys.path.append(duneuropy_path)

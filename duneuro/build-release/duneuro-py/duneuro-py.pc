@@ -1,0 +1,15 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+CXX=/usr/bin/g++-9 
+CC=/usr/bin/gcc
+DEPENDENCIES=
+
+Name: duneuro-py
+Version: 2.5-dev
+Description: duneuro-py module
+URL: http://dune-project.org/
+Requires: dune-common duneuro
+Libs: -L${libdir}
+Cflags: -I${includedir}

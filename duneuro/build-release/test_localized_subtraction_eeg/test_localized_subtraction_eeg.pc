@@ -1,0 +1,15 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+CXX=/usr/bin/g++-9 
+CC=/usr/bin/gcc
+DEPENDENCIES=
+
+Name: test_localized_subtraction_eeg
+Version: 0.1
+Description: test_localized_subtraction_eeg module
+URL: http://dune-project.org/
+Requires: duneuro
+Libs: -L${libdir}
+Cflags: -I${includedir}

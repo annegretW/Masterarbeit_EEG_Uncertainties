@@ -65,7 +65,7 @@ int main(){
     pt.put("PrintLevel",3);
     auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
-    Eigen::VectorXd startPt(10);
+    Eigen::VectorXd startPt(100);
     startPt.setConstant(0.5);
 
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
@@ -94,7 +94,7 @@ int main(){
       pt.put("PrintLevel",3);
       auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
-      Eigen::VectorXd startPt(10);
+      Eigen::VectorXd startPt(100);
       startPt.setConstant(0.5);
     
       std::shared_ptr<SampleCollection> samps = chain->Run(startPt);

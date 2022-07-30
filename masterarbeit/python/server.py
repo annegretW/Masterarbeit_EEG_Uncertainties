@@ -3,24 +3,23 @@
 import umbridge
 import numpy as np
 import math
-import leadfield
 
 class TestModel(umbridge.Model):
     def __init__(self):
         super(TestModel, self).__init__()
-        L = np.transpose(np.load('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_L1.npz')['arr_0'])
+        L = np.transpose(np.load('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_100_L1.npz')['arr_0'])
         self.n = len(L[0])
         self.s_ref = np.random.rand(self.n)
         self.leadfield1 = L 
         self.m1 = len(L) 
         self.b_ref1 = np.matmul(self.leadfield1,self.s_ref)
 
-        L = np.transpose(np.load('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_L2.npz')['arr_0'])
+        L = np.transpose(np.load('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_100_L2.npz')['arr_0'])
         self.leadfield2 = L 
         self.m2 = len(L) 
         self.b_ref2 = np.matmul(self.leadfield2,self.s_ref)
 
-        L = np.transpose(np.load('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_L3.npz')['arr_0'])
+        L = np.transpose(np.load('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_100_L3.npz')['arr_0'])
         self.leadfield3 = L 
         self.m3 = len(L) 
         self.b_ref3 = np.matmul(self.leadfield3,self.s_ref)

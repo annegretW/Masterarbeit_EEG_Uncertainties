@@ -1,0 +1,1 @@
+/home/anne/Masterarbeit/duneuro/test_localized_subtraction_eeg/src/input/sphere/conductivities.txt
