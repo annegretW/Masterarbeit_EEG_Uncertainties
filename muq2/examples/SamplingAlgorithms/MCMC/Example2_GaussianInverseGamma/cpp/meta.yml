@@ -1,0 +1,7 @@
+- example:
+    file: GaussianGammaSampling.cpp
+    tag: MCMC
+    title: Basic Metropolis-in-Gibbs Sampling
+    description: Metropolis-in-Gibbs sampling of a simple hierarchical Bayesian model with Gaussian-Inverse Gamma target density.
+    other_files: DensityGraph.png
+    doc_level: 4 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

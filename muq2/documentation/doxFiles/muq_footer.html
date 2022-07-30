@@ -1,0 +1,45 @@
+<!-- HTML footer for doxygen 1.9.1-->
+<!-- start footer part -->
+<!--BEGIN GENERATE_TREEVIEW-->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    $navpath
+    <li class="footer">$generatedby <a href="https://www.doxygen.org/index.html"><img class="footer" src="$relpath^doxygen.svg" width="104" height="31" alt="doxygen"/></a> $doxygenversion </li>
+  </ul>
+</div>
+<!--END GENERATE_TREEVIEW-->
+<!--BEGIN !GENERATE_TREEVIEW-->
+<hr class="footer"/><address class="footer"><small>
+$generatedby&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="$relpath^doxygen.svg" width="104" height="31" alt="doxygen"/></a> $doxygenversion
+</small></address>
+<!--END !GENERATE_TREEVIEW-->
+</body>
+
+<!-- Highlight all of the pre code blocks with highlight.js -->
+<script>hljs.highlightAll();</script>
+
+<!-- Javascript to allow code blocks to flip between python and c++ -->
+<script>
+function selectLanguage(element, evt, blockid, groupid) {
+  var i, x, tablinks;
+
+  var codeDiv = document.getElementById(groupid);
+
+  x = codeDiv.getElementsByClassName("muqcodeblock");
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";
+  }
+
+  tablinks = codeDiv.getElementsByClassName("muqcodetab");
+  for (i = 0; i < x.length; i++) {
+    if(tablinks[i]!=element){
+      tablinks[i].className = tablinks[i].className.replace(" w3-black", " w3-gray");
+    }else{
+      tablinks[i].className = tablinks[i].className.replace(" w3-gray", " w3-black");
+    }
+  }
+  codeDiv.querySelector('#'+blockid).style.display = "block";
+}
+</script>
+
+</html>

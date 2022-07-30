@@ -1,0 +1,6 @@
+- example:
+    file: MetropolisInGibbs.cpp
+    tag: MCMC
+    title: Basic Metropolis-In-Gibbs Sampling
+    description: Sampling independent Gaussian random variables with a random walk Metropolis-In-Gibbs sampler.
+    doc_level: 1 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

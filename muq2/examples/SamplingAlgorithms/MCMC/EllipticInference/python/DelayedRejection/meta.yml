@@ -1,0 +1,6 @@
+- example:
+    file: EllipticInference.py
+    tag: MCMC
+    title: Bayesian Inference using Delayed Rejection and pCN MCMC
+    description: Illustrates the use of a delayed rejection MCMC sampler with two pCN proposals on a Bayesian inverse problem constructed from an elliptic PDE forward model.
+    doc_level: 2 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

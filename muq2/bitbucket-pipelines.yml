@@ -1,0 +1,218 @@
+image: debian:latest
+
+pipelines:
+  default:
+    - parallel:
+      - step:
+          name: gcc-external-dep-mpi
+          image: mparno/muq-build:latest
+          script:
+
+            # Build muq
+            - cd $BITBUCKET_CLONE_DIR
+            - cd build
+            - cmake -DMUQ_USE_GTEST=ON -DMUQ_USE_MPI=ON -DCMAKE_CXX_COMPILER=mpic++ -DCMAKE_C_COMPILER=mpicc -DMUQ_USE_PYTHON=ON -DCMAKE_INSTALL_PREFIX=/home/muq-user/install ..
+            - make
+            - make examples
+            - make install
+            - ./RunAllTests
+            - mpirun -np 2 ./RunAllParallelTests
+
+      - step:
+          name: python-notebooks
+          image: ubuntu:latest
+          script:
+            - apt-get update
+            - DEBIAN_FRONTEND="noninteractive" apt-get install -y cmake libgtest-dev clang libhdf5-dev libeigen3-dev libboost-all-dev libnlopt-dev libsundials-dev python-dev pybind11-dev graphviz
+
+            # Python deps
+            - DEBIAN_FRONTEND="noninteractive" apt-get install -y python3-pip
+            - pip3 install papermill ipykernel # Tools for running notebooks
+            - pip3 install matplotlib h5py ipywidgets scipy # Some of our examples require this
+
+            # Build muq
+            - cd $BITBUCKET_CLONE_DIR
+            - cd build
+            - cmake -DMUQ_USE_PYTHON=ON -DPYBIND11_PYTHON_VERSION=3 -DCMAKE_INSTALL_PREFIX=$BITBUCKET_CLONE_DIR/build/install ..
+            - make install
+
+            # Run all python notebooks
+            - cd $BITBUCKET_CLONE_DIR
+            - export PYTHONPATH=$PYTHONPATH:$BITBUCKET_CLONE_DIR/build/install/python:$BITBUCKET_CLONE_DIR/build/install/lib
+            - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BITBUCKET_CLONE_DIR/build/install/lib:$BITBUCKET_CLONE_DIR/build/install/muq_external/lib
+            - ./RunAllNotebooks.sh
+
+  tags:
+    'v*.*.*':
+      - step:
+            name: documentation
+            image: mparno/muq-build
+            script:
+              - pip3 install jinja2
+              - cd $BITBUCKET_CLONE_DIR/build
+              - cmake -DMUQ_USE_GTEST=ON -DMUQ_USE_MPI=ON -DCMAKE_CXX_COMPILER=mpic++ -DCMAKE_C_COMPILER=mpicc -DMUQ_USE_PYTHON=ON -DCMAKE_INSTALL_PREFIX=/home/muq-user/install ..
+              - make doc
+              - cd ~
+              - git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/mituq/mituq.bitbucket.io.git
+              - cd mituq.bitbucket.io
+              - if [ -d "source/${BITBUCKET_TAG}" ]; then rm -rf source/${BITBUCKET_TAG}; fi
+              - rm -rf source/latest
+              - cp -r $BITBUCKET_CLONE_DIR/build/doxygen_output/html source/${BITBUCKET_TAG}
+              - cp -r $BITBUCKET_CLONE_DIR/build/doxygen_output/html source/latest
+              - git add source/${BITBUCKET_TAG}
+              - git add -u
+              - git add source/latest
+              - git config --global user.email "parnomd@gmail.com"
+              - git config --global user.name "Bitbucket Pipelines"
+              - git commit -m "Added documentation for $BITBUCKET_TAG"
+              - git push https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/mituq/mituq.bitbucket.io.git --all
+      - step:
+            name: archive
+            script:
+              - apt-get update
+              - apt-get install -y git curl
+              - cd $BITBUCKET_CLONE_DIR
+              - v0=`echo $BITBUCKET_TAG | cut -c 2-2`;v1=`echo $BITBUCKET_TAG | cut -c 4-4`; v2=`echo $BITBUCKET_TAG | cut -c 6-6`; export TARFILE="muq_${v0}_${v1}_${v2}.tar.gz"
+              - echo "Creating archive ${TARFILE}"
+              - git archive --format=tar.gz --output=${TARFILE} HEAD
+              - curl -X POST --user "${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}" "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"${TARFILE}"
+      - step:
+            name: conda
+            script:
+              - apt-get update
+              - apt-get install -y git curl openssl
+              - v0=`echo $BITBUCKET_TAG | cut -c 2-2`;v1=`echo $BITBUCKET_TAG | cut -c 4-4`; v2=`echo $BITBUCKET_TAG | cut -c 6-6`; export TARFILE="muq_${v0}_${v1}_${v2}.tar.gz"
+              - export DOWNLOAD_URL="https://bitbucket.org/mituq/muq2/downloads/${TARFILE}"
+              - export MUQ_SHA=`curl -sL ${DOWNLOAD_URL} | openssl sha256 | cut -c10-`
+              - cd ~
+              - git clone git@github.com:mparno/muq-feedstock.git
+              - cd muq-feedstock
+              - git remote add upstream https://github.com/conda-forge/muq-feedstock
+              - git fetch upstream
+              - git rebase upstream/master
+              - git checkout -b $BITBUCKET_TAG
+              - temp=`echo $BITBUCKET_TAG | cut -c2-`; export NEW_VERSION="{% set version = \"${temp}\" %}"
+              - 'sed -i "s/.*set version.*/$NEW_VERSION/" recipe/meta.yaml'
+              - 'sed -i "s/.*sha256.*/  sha256: $MUQ_SHA/" recipe/meta.yaml'
+              - 'sed -i "s/  number: .*/  number: 0/" recipe/meta.yaml'
+              - git add recipe/meta.yaml
+              - git config --global user.email "parnomd@gmail.com"
+              - git config --global user.name "Bitbucket Pipelines"
+              - git commit -m "Updated recipe version."
+              - git push git@github.com:mparno/muq-feedstock.git --all
+
+  custom:
+    weekly-build:
+      - parallel:
+
+        - step:
+              name: clang-external-dep
+              image: mparno/muq-build:latest
+              script:
+
+                # Build muq
+                - cd $BITBUCKET_CLONE_DIR
+                - cd build
+                - cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DMUQ_USE_GTEST=ON -DMUQ_USE_PYTHON=ON -DCMAKE_INSTALL_PREFIX=/home/muq-user/install ..
+                - make
+                - make examples
+                - make install
+                - ./RunAllTests
+
+        - step:
+            name: clang-internal-dep-mpi
+            script:
+              - apt-get update
+              - apt-get install -y cmake openmpi-bin libopenmpi-dev libgtest-dev clang python3-dev
+
+
+              # Build gtest (have to, since libgtest-dev only includes sources, no binaries available currently...)
+              - cd /usr/src/gtest
+              - cmake CMakeLists.txt
+              - make
+              - cp lib/*.a /usr/lib
+
+              - export OMPI_CXX=clang++ # Need this to make sure openmpi actually uses clang
+
+              # Build muq
+              - cd $BITBUCKET_CLONE_DIR
+              - cd build
+              - cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DMUQ_USE_GTEST=ON -DMUQ_USE_MPI=ON -DMUQ_USE_PYTHON=ON ..
+              - make
+              - make examples
+              - make install
+              - ./RunAllTests
+              - mpirun --allow-run-as-root -np 2 ./RunAllParallelTests
+
+        - step:
+            name: gcc-external-dep-mpi
+            image: mparno/muq-build:latest
+            script:
+
+              # Build muq
+              - cd $BITBUCKET_CLONE_DIR
+              - cd build
+              - cmake -DMUQ_USE_GTEST=ON -DMUQ_USE_MPI=ON -DMUQ_USE_PYTHON=ON -DCMAKE_INSTALL_PREFIX=/home/muq-user/install ..
+              - make
+              - make examples
+              - make install
+              - ./RunAllTests
+              - mpirun -np 2 ./RunAllParallelTests
+
+        - step:
+              name: ubuntu-LTS
+              image: ubuntu:latest
+              script:
+                - apt-get update
+                - DEBIAN_FRONTEND="noninteractive" apt-get install -y cmake libgtest-dev clang libhdf5-dev libeigen3-dev libboost-all-dev libnlopt-dev libsundials-dev python-dev pybind11-dev
+
+
+                # Build gtest (have to, since libgtest-dev only includes sources, no binaries available currently...)
+                - cd /usr/src/gtest
+                - cmake CMakeLists.txt
+                - make
+                - cp lib/*.a /usr/lib
+
+
+                # Build muq
+                - cd $BITBUCKET_CLONE_DIR
+                - cd build
+                - cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DMUQ_USE_GTEST=ON -DMUQ_USE_PYTHON=ON ..
+                - make
+                - make examples
+                - make install
+                - ./RunAllTests
+
+        - step:
+              name: ubuntu-latest-release
+              image: ubuntu:rolling
+              script:
+                - apt-get update
+                - DEBIAN_FRONTEND="noninteractive" apt-get install -y cmake libgtest-dev clang libhdf5-dev libeigen3-dev libboost-all-dev libnlopt-dev libsundials-dev python-dev pybind11-dev libomp-dev
+
+
+                # Build gtest (have to, since libgtest-dev only includes sources, no binaries available currently...)
+                - cd /usr/src/gtest
+                - cmake CMakeLists.txt
+                - make
+                - cp lib/*.a /usr/lib
+
+
+                # Build muq
+                - cd $BITBUCKET_CLONE_DIR
+                - cd build
+                - cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DMUQ_USE_GTEST=ON -DMUQ_USE_PYTHON=ON ..
+                - make
+                - make examples
+                - make install
+                - ./RunAllTests
+
+        - step:
+              name: install-instructions
+              image: ubuntu:latest
+              script:
+                - apt update
+                - DEBIAN_FRONTEND="noninteractive" apt install -y sudo tzdata
+                - cd $BITBUCKET_CLONE_DIR
+                - cd SupportScripts
+                - bash install-instructions.sh

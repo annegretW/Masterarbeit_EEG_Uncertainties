@@ -1,0 +1,7 @@
+- example:
+    file: TheisInference.ipynb
+    tag: MCMC
+    title: Analyzing Groundwater Pump Tests with Hierarchical Models
+    description: Characterizes the properties of a confined aquifer by solving a hierarchical Bayesian inference problem involving the Theis model of groundwater flow.
+    other_files: drawdown.svg
+    doc_level: 4

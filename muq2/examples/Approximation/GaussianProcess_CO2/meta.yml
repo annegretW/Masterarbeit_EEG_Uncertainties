@@ -1,0 +1,6 @@
+- example:
+    file: GaussianProcess_CO2.cpp
+    tag: Gaussian Process
+    title: Mauna Loa CO2
+    description: Regression of CO2 observations with a statespace representation of a Gaussian process.
+    doc_level: 1 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

@@ -1,0 +1,6 @@
+- example:
+    file: CustomProposal.cpp
+    tag: MCMC
+    title: Random walk Metropolis MCMC using a custom proposal covariance
+    description: Implement a simple Metropolis-Hastings MCMC method, choosing a custom covariance for a Gaussian proposal.
+    doc_level: 4 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

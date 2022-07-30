@@ -1,0 +1,6 @@
+- example:
+    file: EllipticInference.ipynb
+    tag: MCMC
+    title: Elliptic PDE Inverse Problem using DILI and pCN MCMC
+    description: Compares the performance of dimensiona independent likelihood information (DILI) MCMC with vanilla pCN MCMC on an inverse problem involving the groundwater flow equation (an elliptic PDE).
+    doc_level: 4 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

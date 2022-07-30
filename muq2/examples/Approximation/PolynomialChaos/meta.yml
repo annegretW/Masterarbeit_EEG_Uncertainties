@@ -1,0 +1,16 @@
+- example:
+    file: AdaptiveSmolyakConstruction.ipynb
+    tag: PCE
+    title: Basic PCE Construction
+    description: Basic construction of polynomial chaos expansions with adaptive Smolyak algorithm.
+    other_files: BeamDrawing.png, ModelGraph.png
+    doc_level: 3 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation
+
+
+- example:
+    file: AdaptiveSmolyak-MixedDimensions.ipynb
+    tag: PCE
+    title: Mixed PCE Construction
+    description: Construction of polynomial chaos expansions with inputs that have different distributions.
+    other_files: BeamDrawing.png, ModelGraph.png
+    doc_level: 4 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

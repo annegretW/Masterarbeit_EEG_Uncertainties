@@ -1,0 +1,6 @@
+- example:
+    file: GaussianSampling.ipynb
+    tag: MCMC
+    title: Simple MCMC
+    description: Introduces MUQ's MCMC capabilities using a random walk proposal on a Gaussian target densityl.
+    doc_level: 4 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

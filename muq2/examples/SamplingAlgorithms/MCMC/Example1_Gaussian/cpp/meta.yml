@@ -1,0 +1,6 @@
+- example:
+    file: GaussianSampling.cpp
+    tag: MCMC
+    title: Simple MCMC
+    description: MCMC sampling from a simple Gaussian distribution. Custom target distributions can be supplied.
+    doc_level: 4 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

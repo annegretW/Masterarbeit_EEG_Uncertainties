@@ -1,0 +1,6 @@
+- example:
+    file: MLDA.cpp
+    tag: MCMC
+    title: Multilevel Delayed Acceptance
+    description: MCMC sampling using Multilevel Delayed Acceptance.
+    doc_level: 2 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

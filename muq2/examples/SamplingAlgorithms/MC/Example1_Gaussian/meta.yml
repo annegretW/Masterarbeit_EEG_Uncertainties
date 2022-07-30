@@ -1,0 +1,20 @@
+- example:
+    file: MonteCarlo.cpp
+    tag: MCMC
+    title: MC using MCMC components
+    description: Shows how to implement Monte Carlo type methods using the modular MCMC stack. Allows easily running MC and MCMC on the same model.
+    doc_level: 1
+
+- example:
+    file: MultilevelMonteCarlo.cpp
+    tag: MCMC
+    title: MLMC using MLMCMC components
+    description: Shows how to implement Multilevel Monte Carlo type methods using the modular MCMC stack. Allows easily running MLMC and MLMCMC on the same model.
+    doc_level: 1
+
+- example:
+    file: ParallelMultilevelMonteCarlo.cpp
+    tag: MCMC
+    title: Parallelized MLMC using MCMC components
+    description: Shows how to implement parallelized Multilevel Monte Carlo type methods using the modular parallel MIMCMC stack. Allows easily runningMultilevel MC and Multilevel / Multiindex MCMC on the same model, using a common parallel architecture.
+    doc_level: 1

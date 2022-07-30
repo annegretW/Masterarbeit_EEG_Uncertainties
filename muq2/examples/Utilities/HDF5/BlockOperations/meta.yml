@@ -1,0 +1,6 @@
+- example:
+    file: BlockOperations.cpp
+    tag: HDF5
+    title: Block Operations in HDF5
+    description: Demonstrates slicing and other block operations for reading and writing parts of a dataset stored in an HDF5 file.
+    doc_level: 1 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

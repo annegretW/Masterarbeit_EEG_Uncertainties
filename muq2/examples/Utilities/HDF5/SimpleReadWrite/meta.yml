@@ -1,0 +1,6 @@
+- example:
+    file: SimpleReadWrite.cpp
+    tag: HDF5
+    title: Introduction to MUQ's HDF5 wrapper
+    description: Demonstrates the use of MUQ's HDF5 wrapper for reading and writing binary HDF5 files.
+    doc_level: 1 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

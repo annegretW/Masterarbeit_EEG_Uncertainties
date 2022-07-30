@@ -1,0 +1,14 @@
+- example:
+    file: UMBridgeModelClient.cpp
+    tag: Modeling
+    title: UM-Bridge Client
+    description: Connecting to a (possibly remote and/or containerized) UM-Bridge model from MUQ.
+    doc_level: 4
+
+- example:
+    file: UMBridgeModelServer.cpp
+    tag: Modeling
+    title: UM-Bridge Server
+    description: Exposing a MUQ model through the UM-Bridge network interface.
+    other_files: FlowEquation.h
+    doc_level: 4

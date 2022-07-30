@@ -1,0 +1,6 @@
+- example:
+    file: MonotoneRegression.cpp
+    tag: Regression
+    title: Monotone Regression
+    description: Regression of stress-strain data with guaranteed monotonocity of the learned relationship.
+    doc_level: 2 # 1 for no description, 2 for minimal description, 3 for several descriptive cellss, 4 for very good documentation

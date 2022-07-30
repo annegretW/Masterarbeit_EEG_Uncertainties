@@ -1,0 +1,6 @@
+- example:
+    file: GaussianGammaSampling.ipynb
+    tag: MCMC
+    title: Basic Metropolis-in-Gibbs Sampling
+    description: Metropolis-in-Gibbs sampling of a simple hierarchical Bayesian model with Gaussian-Inverse target density.
+    doc_level: 4

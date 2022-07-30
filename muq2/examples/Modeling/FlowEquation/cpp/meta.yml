@@ -1,0 +1,7 @@
+- example:
+    file: FlowEquation.cpp
+    tag: Modeling
+    title: Groundwater flow equation
+    description: Finite element implementation of 1d groundwater flow equation in a MUQ ModPiece.  Also provides adjoint-based gradients and Hessian actions.  The Hessian eigenvalue spectrum is computed using MUQ's stochastic eigevalue solver.
+    other_files: DarcyFlow.png
+    doc_level: 4

@@ -1,0 +1,27 @@
+<!--
+This file defines a jinja2 template for the "@codeblock" blocks parsed by the
+MUQ doxygen preprocessor.
+-->
+@htmlonly
+
+<div id="{{ groupid }}">
+<!-- Buttons to select code type -->
+<div class="w3-bar w3-white w3-tiny">
+  <div class="w3-bar-item w3-button muqcodetab w3-border w3-black" onclick="selectLanguage(this,event,'{{ allblocks[0]['id'] }}','{{ groupid }}')">{{ allblocks[0]['name'] }}</div>
+  {% for block in allblocks[1:] %}
+  <div class="w3-bar-item w3-button muqcodetab w3-border w3-gray" onclick="selectLanguage(this,event,'{{ block['id'] }}','{{ groupid }}')">{{ block['name'] }}</div>
+  {% endfor %}
+</div>
+
+<!-- Code blocks -->
+<div id="{{ allblocks[0]['id'] }}" class="w3-container w3-border muqcodeblock">
+  <pre style="margin:0px;"><code style="margin:0px;" class="language-{{ allblocks[0]['language'] }}">{{ allblocks[0]['code'] | e }}</code></pre>
+</div>
+{% for block in allblocks[1:] %}
+<div id="{{ block['id'] }}" class="w3-container w3-border muqcodeblock" style="display:none">
+  <pre style="margin:0px;"><code style="margin:0px;" class="language-{{ block['language'] }}">{{ block['code'] | e }}</code></pre>
+</div>
+{% endfor %}
+</div>
+
+@endhtmlonly
