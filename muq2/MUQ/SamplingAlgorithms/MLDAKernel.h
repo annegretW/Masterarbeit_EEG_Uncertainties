@@ -30,8 +30,9 @@ namespace muq {
       virtual void PrintStatus(std::string prefix) const override {
         std::stringstream msg;
         msg << std::setprecision(2);
-        msg << prefix << "MLDAKernel acceptance Rate = "  << 100.0*double(numAccepts)/double(numCalls) << "%";
-
+        msg << prefix << "NumAccepts = "  << numAccepts;
+        msg << prefix << " NumCalls = "  << numCalls;
+        msg << prefix << " MLDAKernel acceptance Rate = "  << 100.0*double(numAccepts)/double(numCalls) << "%";
         std::cout << msg.str() << std::endl;
       }
 

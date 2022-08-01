@@ -88,6 +88,7 @@ std::vector<std::shared_ptr<SamplingState>> MHKernel::Step(unsigned int const t,
     numAccepts++;
 
     prop->meta["IsProposal"] = false;
+
     return std::vector<std::shared_ptr<SamplingState>>(1, prop);
   } else {
     return std::vector<std::shared_ptr<SamplingState>>(1, prevState);
@@ -99,6 +100,8 @@ void MHKernel::PrintStatus(const std::string prefix) const
   std::stringstream out;
   out << std::fixed << std::setw(3);
   out.precision(0);
-  out << "MHKernel acceptance Rate = " << 100.0*double(numAccepts)/double(numCalls) << "%";
+  out << "NumAccepts = " << numAccepts;
+  out << " NumCalls = " << numCalls;
+  out << " MHKernel acceptance Rate = " << 100.0*double(numAccepts)/double(numCalls) << "%";
   std::cout << prefix << out.str() << std::endl;
 }
