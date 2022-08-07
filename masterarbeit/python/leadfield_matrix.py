@@ -47,6 +47,7 @@ def create_leadfield_matrix(mesh_path,tensors_path,electrodes_path,dipoles_path,
     # loading dipoles
     print('Reading dipoles')
     dipoles = dp.read_dipoles_3d(dipoles_path)[0:n]
+    print(dipoles)
     print('Dipoles read')
 
     # solve EEG forward problem, which means computing the leadfield
@@ -63,7 +64,7 @@ def create_leadfield_matrix(mesh_path,tensors_path,electrodes_path,dipoles_path,
 
 if __name__=="__main__":
     print("Create leadfield matrix")
-    n = 10
+    n = 100
 
     m = 20
     L = create_leadfield_matrix(mesh_path,tensors_path,electrodes_path,dipoles_path,n,m)
