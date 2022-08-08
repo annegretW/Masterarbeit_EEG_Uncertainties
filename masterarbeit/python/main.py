@@ -25,9 +25,7 @@ def testmodel_example2():
     return server.TestModel('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_100')
 
 def testmodel_example3():
-    ##################################################################################
-    # 1. Simulate disturbed values at the electrodes for a given dipole              #
-    ##################################################################################
+    # 1. Simulate disturbed values at the electrodes for a given dipole              
     # 1.1 Set reference dipol
     s_ref = dp.Dipole3d([127, 127, 197, 0, 0, 92])
 
@@ -65,19 +63,7 @@ def testmodel_example3():
   -2.1913921,  -2.10747477,  3.46738841 ,-2.3445429 ,  0.1203936 , -2.55334512,
   -1.43177645, 14.6304374 ,  4.58796473,  3.38983978]]
 
-
-    ##################################################################################
-    # 2.           
-    ##################################################################################
-    center = (127,127,127)
-    radii = (92,86,80,78)
-    conductivities = [0.00043,0.00001,0.00179,0.00033]
-    resolution = 50
-
-    # Create mesh
-    mesh = msh.StructuredMesh(center, radii, resolution)
-
-    return eeg_model.EEGModel(b_ref, mesh, conductivities)
+    return eeg_model.EEGModel(b_ref)
 
 
 # choose a testmodel

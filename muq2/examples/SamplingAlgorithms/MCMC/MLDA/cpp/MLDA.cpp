@@ -111,8 +111,8 @@ void example2(){
   int n = 3;
   int num_samples = 1e3;
   int burn_in = 1e2;
-  double proposal_var = 0.0001;
-  double proposal_var_l0 = 0.05;
+  double proposal_var = 0.5;
+  double proposal_var_l0 = 0.5;
   std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples";
 
   std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
