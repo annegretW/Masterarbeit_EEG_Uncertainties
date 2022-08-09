@@ -77,3 +77,40 @@ def create_leadfield(mesh, conductivities, electrodes_path, dipoles):
     leadfield_matrix, computation_information = meg_driver.applyEEGTransfer(transfer_matrix, dipoles, driver_config)
 
     return transfer_matrix, leadfield_matrix
+
+def create_transfer_matrix(mesh, conductivities, electrodes_path):
+    # Create MEG driver
+    config = {
+        'type' : 'fitted',
+        'solver_type' : 'cg',
+        'element_type' : 'hexahedron',
+        'volume_conductor' : {
+             'grid' : {
+                'elements' : mesh.elements.tolist(),
+                'nodes' : mesh.nodes.tolist()
+               },
+               'tensors' : {
+                'labels' : mesh.labels.tolist(),
+                'conductivities' : conductivities
+            }
+         },
+         'post_process' : 'true', 
+         'subtract_mean' : 'true'
+    }
+    meg_driver = dp.MEEGDriver3d(config)
+
+    # Set electrode positions
+    electrodes = np.genfromtxt(electrodes_path,delimiter=None) 
+    electrodes = [dp.FieldVector3D(t) for t in electrodes.tolist()]
+    electrode_config = {
+        'type' : 'closest_subentity_center',
+        'codims' : [3]
+    }
+    meg_driver.setElectrodes(electrodes, electrode_config)
+
+    # Compute transfer matrix
+    transfer_solver_config = {'reduction' : '1e-14'}
+    eeg_transfer_config = {'solver' : transfer_solver_config}
+    transfer_matrix, eeg_transfer_computation_information = meg_driver.computeEEGTransferMatrix(eeg_transfer_config)
+
+    return transfer_matrix, meg_driver

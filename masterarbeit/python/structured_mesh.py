@@ -2,13 +2,13 @@ import numpy as np
 from scipy import integrate
 
 class StructuredMesh():
-    def __init__(self, center, radii, resolution):
+    def __init__(self, center, radii, cells_per_dim):
         self.center = center
         self.radii = radii
-        self.resolution = resolution
+        self.cells_per_dim = cells_per_dim
+        self.cell_size = 2*np.max(self.radii)/self.cells_per_dim
 
-        N = int(np.round(2*np.max(radii)/resolution))
-        print("N = " + str(N))
+        N = cells_per_dim
         nr_nodes = N + 1
         lower_left = center - np.max(radii)
         upper_right = center + np.max(radii)
@@ -57,13 +57,11 @@ class StructuredMesh():
         self.labels = np.ravel(labels_array, order='F')
         self.centers = centers_array[idx_elements_inside,:]
 
-        print("Created new mesh with \n " + str(len(self.nodes)) + " nodes \n " + str(len(self.elements)) + " elements")
+        print(self.centers)
 
+        print("\nCreated new mesh with \n " + str(len(self.nodes)) + " nodes \n " + str(len(self.elements)) + " elements\n")
 
     def find_next_node(self, point):
-        #print(self.centers)
-        #print(point)
-
         dist = np.sqrt(sum((self.centers[0][0]-point)**2))
         next = 0
         for i in range(len(self.centers[0])):
@@ -72,4 +70,8 @@ class StructuredMesh():
                 next = i
         return next
 
-        
+    def find_next_center(self, point):
+        p = np.array(point) - np.array(self.center) + np.max(self.radii)
+        p = np.divmod(p, self.cell_size)[0]
+        next = p*self.cell_size + self.cell_size/2 + np.array(self.center) - np.max(self.radii)
+        return next

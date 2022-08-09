@@ -5,7 +5,6 @@ import eeg_model
 import umbridge
 import numpy as np
 import transfer_matrix
-import structured_mesh as msh
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
@@ -24,33 +23,43 @@ def testmodel_example1():
 def testmodel_example2():
     return server.TestModel('/home/anne/Masterarbeit/masterarbeit/data/leadfield_matrix_100')
 
-def testmodel_example3():
-    # 1. Simulate disturbed values at the electrodes for a given dipole              
-    # 1.1 Set reference dipol
-    s_ref = dp.Dipole3d([127, 127, 197, 0, 0, 92])
+def save_transfer_matrix(path):
+    np.savez_compressed('path', transfer_matrix)
 
-    # 1.2 Calc correct sensor values
+def calc_disturbed_sensor_values(s_ref):
+    print("#################################################################")
+    print("Simulate disturbed sensor values for a given dipole.")
+    print("################################################################# \n")
+
+    print("s_ref = %s \n" % s_ref)
+
+    # Calc correct sensor values
     volume_conductor_cfg = {'grid.filename' : mesh_path, 'tensors.filename' : tensors_path}
     driver_cfg = {'type' : 'fitted', 'solver_type' : 'cg', 'element_type' : 'tetrahedron', 'post_process' : 'true', 'subtract_mean' : 'true'}
     solver_cfg = {'reduction' : '1e-14', 'edge_norm_type' : 'houston', 'penalty' : '20', 'scheme' : 'sipg', 'weights' : 'tensorOnly'}
     driver_cfg['solver'] = solver_cfg
     driver_cfg['volume_conductor'] = volume_conductor_cfg
     meeg_driver = dp.MEEGDriver3d(driver_cfg)
-    #T = transfer_matrix.create_transfer_matrix(mesh_path,tensors_path,electrodes_path)
+    T = transfer_matrix.create_transfer_matrix(mesh_path,tensors_path,electrodes_path)
 
     source_model_cfg = {'type' : 'localized_subtraction', 'restrict' : 'false', 'initialization' : 'single_element', 'intorderadd_eeg_patch' : '0', 'intorderadd_eeg_boundary' : '0', 'intorderadd_eeg_transition' : '0', 'extensions' : 'vertex vertex'}
     driver_cfg['source_model'] = source_model_cfg
-    #b_ref, computation_information = meeg_driver.applyEEGTransfer(T, [s_ref], driver_cfg)
+    b_ref, computation_information = meeg_driver.applyEEGTransfer(T, [s_ref], driver_cfg)
     print("Calculated measurement values at the electrodes:")
-    #print(b_ref) 
+    print(b_ref) 
     print("\n")
 
-    # 1.3 Disturb sensor values
-    #b_ref = np.random.normal(b_ref, 0.005)
+    # Disturb sensor values
+    b_ref = np.random.normal(b_ref, 0.005)
     print("Disturbed measurement values at the electrodes:")
-    #print(b_ref) 
-    
-    b_ref = [[-1.44163533, -1.76093881,  5.27508808, -2.6786638,  -1.3064591,  -2.27850429,
+    print(b_ref) 
+
+    return b_ref
+
+def testmodel_example3(b):
+    return eeg_model.EEGModelNew(b)
+
+b_ref = [[-1.44163533, -1.76093881,  5.27508808, -2.6786638,  -1.3064591,  -2.27850429,
   -2.07960639, -1.24571309, 12.20550839, -2.6565059,  -2.29963664 ,-2.46565563,
   -2.71329052, -1.4184369,  -0.09620508, -2.2908153 , -2.14041701, 12.20740432,
   -1.20069863, -2.09782968, -2.51178363, -1.07017265,-2.51989558,  0.53272719,
@@ -63,11 +72,11 @@ def testmodel_example3():
   -2.1913921,  -2.10747477,  3.46738841 ,-2.3445429 ,  0.1203936 , -2.55334512,
   -1.43177645, 14.6304374 ,  4.58796473,  3.38983978]]
 
-    return eeg_model.EEGModel(b_ref)
-
+s_ref = dp.Dipole3d([127, 127, 197, 0, 0, 1])
 
 # choose a testmodel
-testmodel = testmodel_example3()
+#testmodel = testmodel_example3(calc_disturbed_sensor_values(s_ref))
+testmodel = testmodel_example3(b_ref)
 
 # send via localhost
 umbridge.serve_model(testmodel, 4243) 
