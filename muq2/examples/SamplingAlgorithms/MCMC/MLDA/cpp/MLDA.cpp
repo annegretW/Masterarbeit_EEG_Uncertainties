@@ -21,12 +21,16 @@ using namespace muq::Modeling;
 using namespace muq::SamplingAlgorithms;
 using namespace muq::Utilities;
 
-void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, double proposal_var, double proposal_var_l0, std::string results_path){
+void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
   { // MLDA
     pt::ptree ptProposal;
     ptProposal.put("Subsampling_0", 10); // Subsampling on level 0
     ptProposal.put("Subsampling_1", 3); // Subsampling on level 1
-    ptProposal.put("Proposal_Variance_0", proposal_var_l0); // Proposal Variance on coarsest level
+
+    ptProposal.put("Proposal_Variance_0", proposal_var[0]); // Proposal Variance on coarsest level
+    ptProposal.put("Proposal_Variance_1", proposal_var[1]);
+    ptProposal.put("Proposal_Variance_2", proposal_var[2]);
+
     auto proposal = std::make_shared<MLDAProposal>(ptProposal, sampling_problems.size()-1, sampling_problems);
 
     pt::ptree ptBlockID;
@@ -51,7 +55,7 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
       auto problem = sampling_problems[level];
 
       pt::ptree ptProposal;
-      ptProposal.put("ProposalVariance",proposal_var);
+      ptProposal.put("ProposalVariance",proposal_var[level]);
       auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
 
       int x = problem->blockSizes(0);
@@ -78,8 +82,8 @@ void example1(){
   int n = 10;
   int num_samples = 1000;
   int burn_in = 0;
-  double proposal_var = 0.05;
-  double proposal_var_l0 = 0.1;
+  std::vector<double> proposal_var = {0.1, 0.1, 0.1};
+
   std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples_10";
 
   std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
@@ -104,15 +108,20 @@ void example1(){
   startPt[0] = 0.9;
   startPt.normalize();
 
-  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, proposal_var_l0, results_path);
+  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
 }
 
 void example2(){
   int n = 3;
   int num_samples = 1e3;
-  int burn_in = 0;
-  double proposal_var = 0.5;
-  double proposal_var_l0 = 0.5;
+  int burn_in = 1e2;
+
+  double proposal_var_l0 = 12;
+  double proposal_var_l1 = 6;
+  double proposal_var_l2 = 3;
+
+  std::vector<double> proposal_var = {proposal_var_l0, proposal_var_l1, proposal_var_l2};
+
   std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples";
 
   std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
@@ -134,7 +143,7 @@ void example2(){
 
   Eigen::VectorXd startPt(3);
   startPt << 127, 127, 197;
-  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, proposal_var_l0, results_path);
+  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
 }
 
 
