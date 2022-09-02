@@ -62,13 +62,18 @@ class StructuredMesh():
         print("\nCreated new mesh with \n " + str(len(self.nodes)) + " nodes \n " + str(len(self.elements)) + " elements\n")
 
     def find_next_node(self, point):
-        dist = np.sqrt(sum((self.centers[0][0]-point)**2))
-        next = 0
-        for i in range(len(self.centers[0])):
-            if (np.sqrt(sum((self.centers[0][i]-point)**2)) < dist):
-                dist = np.sqrt(sum((self.centers[0][i]-point)**2))
-                next = i
-        return next
+        index = np.linalg.norm(np.abs(self.nodes - point),axis=1).argmin()
+        return index
+
+        #dist = np.sqrt(sum((self.nodes[0]-point)**2))
+        #next = 0
+        #for i in range(len(self.nodes)):
+        #    if (np.sqrt(sum((self.nodes[i]-point)**2)) < dist):
+        #        dist = np.sqrt(sum((self.nodes[i]-point)**2))
+        #        next = i
+        #return next
+
+
 
     def find_next_center(self, point):
         p = np.array(point) - np.array(self.center) + np.max(self.radii)

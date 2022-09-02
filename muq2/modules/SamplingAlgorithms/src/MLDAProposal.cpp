@@ -18,6 +18,8 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
     ptBlockID.put("BlockIndex",0);
     kernel[0] = std::make_shared<MHKernel>(ptBlockID,problem,proposal);
   } else {
+    boost::property_tree::ptree ptProposal;
+    ptProposal.put("ProposalVariance",pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
     auto proposal = std::make_shared<MLDAProposal>(pt, level-1, sampling_problems);
 
     boost::property_tree::ptree ptBlockID;

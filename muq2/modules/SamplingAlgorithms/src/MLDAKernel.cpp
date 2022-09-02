@@ -31,7 +31,6 @@ std::vector<std::shared_ptr<SamplingState>> MLDAKernel::Step(unsigned int const 
 
   double prop_logtarget = problem->LogDensity(prop_state);
 
-
   const double alpha = std::exp(prop_logtarget - prev_logtarget - (coarse_prop_logtarget - coarse_prev_logtarget));
 
   // accept/reject
@@ -44,7 +43,6 @@ std::vector<std::shared_ptr<SamplingState>> MLDAKernel::Step(unsigned int const 
       prop_state->meta["QOI"] = problem->QOI();
     }
     prop_state->meta["IsProposal"] = false;
-
     return std::vector<std::shared_ptr<SamplingState>>(1, prop_state);
   } else {
     return std::vector<std::shared_ptr<SamplingState>>(1, prevState);

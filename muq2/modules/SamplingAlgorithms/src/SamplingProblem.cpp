@@ -18,7 +18,6 @@ double SamplingProblem::LogDensity(std::shared_ptr<SamplingState> const& state) 
   assert(target);
 
   lastState = state;
-
   return target->Evaluate(state->state).at(0)(0);
 }
 
