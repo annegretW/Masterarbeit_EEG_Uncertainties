@@ -11,7 +11,7 @@ import duneuropy as dp
 
 mesh_path='../data/tet_mesh.msh'
 tensors_path='../data/conductivities.txt'
-electrodes_path='../data/electrodes.txt'
+electrodes_path='../data/electrodes_1005.txt'
 
 def save_leadfield_matrix(path_mesh, path_leadfield, cells_per_dim):
     conductivities = [0.00043,0.00001,0.00179,0.00033]
@@ -33,14 +33,14 @@ def save_leadfield_matrix(path_mesh, path_leadfield, cells_per_dim):
     np.savez_compressed(path_leadfield, leadfield_matrix)
 
 
-def save_transfer_matrix(path_mesh, path_transfer_matrix, cells_per_dim):
+def save_transfer_matrix(path_mesh, electrodes_path, path_transfer_matrix, cells_per_dim):
     conductivities = [0.00043,0.00001,0.00179,0.00033]
     center = (127,127,127)
     radii = (92,86,80,78)
 
     # create mesh
     mesh = msh.StructuredMesh(center, radii, cells_per_dim)
-    np.savez_compressed(path_mesh, mesh, allow_pickle=True)
+    #np.savez_compressed(path_mesh, mesh, allow_pickle=True)
 
     # set dipoles
     dipoles = []
@@ -54,7 +54,15 @@ def save_transfer_matrix(path_mesh, path_transfer_matrix, cells_per_dim):
     np.savez_compressed(path_transfer_matrix, transfer_matrix)
     
 
-def calc_disturbed_sensor_values(s_ref):
+def get_dipole(point):
+    rho = np.arccos((point[2]-127)/92)
+    phi = np.arctan2(point[1]-127, point[0]-127)
+    moment = [np.sin(phi)*np.cos(rho),np.sin(phi)*np.sin(rho),np.cos(phi)]
+    
+    return dp.Dipole3d(point, moment)
+
+
+def calc_disturbed_sensor_values(s_ref, electrodes_path):
     print("#################################################################")
     print("Simulate disturbed sensor values for a given dipole.")
     print("################################################################# \n")
@@ -68,6 +76,7 @@ def calc_disturbed_sensor_values(s_ref):
     driver_cfg['solver'] = solver_cfg
     driver_cfg['volume_conductor'] = volume_conductor_cfg
     meeg_driver = dp.MEEGDriver3d(driver_cfg)
+
     T = transfer_matrix.create_transfer_matrix(mesh_path,tensors_path,electrodes_path)
 
     source_model_cfg = {'type' : 'localized_subtraction', 'restrict' : 'false', 'initialization' : 'single_element', 'intorderadd_eeg_patch' : '0', 'intorderadd_eeg_boundary' : '0', 'intorderadd_eeg_transition' : '0', 'extensions' : 'vertex vertex'}

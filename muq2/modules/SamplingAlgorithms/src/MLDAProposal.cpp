@@ -11,7 +11,7 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
   if (level-1 == 0) { // Coarsest level: Simple MCMC
     boost::property_tree::ptree ptProposal;
     ptProposal.put("ProposalVariance",pt.get<double>("Proposal_Variance_0"));
-    // ptProposal.put("ProposalVariance",0.05);
+    //ptProposal.put("ProposalVariance",5);
     auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
 
     boost::property_tree::ptree ptBlockID;
@@ -20,6 +20,7 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
   } else {
     boost::property_tree::ptree ptProposal;
     ptProposal.put("ProposalVariance",pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
+    //ptProposal.put("ProposalVariance",5);
     auto proposal = std::make_shared<MLDAProposal>(pt, level-1, sampling_problems);
 
     boost::property_tree::ptree ptBlockID;

@@ -256,11 +256,10 @@ class EEGModelTransferFromFile(umbridge.Model):
 
         # parameters
         cells_per_dim = [16,32,64]
-        sigma = 0.05
+        sigma = [0.05,0.01,0.005]
         center = (127,127,127)
         radii = (92,86,80,78)
         conductivities = [0.00043,0.00001,0.00179,0.00033]
-
 
         transfer_path_list = [
             "../data/transfer_matrix_16.npz",
@@ -305,7 +304,7 @@ class EEGModelTransferFromFile(umbridge.Model):
 
         # reference values of measurement values
         self.b_ref = b_ref
-
+        
         # posterior variance
         self.sigma = sigma
 
@@ -354,12 +353,14 @@ class EEGModelTransferFromFile(umbridge.Model):
         b = self.meg_drivers[i].applyEEGTransfer(self.transfer_matrix[i],[next_dipole],self.config)[0]
 
         # calculate the posterior as a normal distribution
-        posterior = -(1/(2*self.sigma**2))*(np.linalg.norm(np.array(self.b_ref)-np.array(b), 2))**2
+        posterior = -(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))**2
 
-        return posterior
+        #print([next_dipole_pos[0],next_dipole_pos[1],next_dipole_pos[2]])
+        #return [[posterior],[next_dipole_pos[0],next_dipole_pos[1],next_dipole_pos[2]]]
+        return [[posterior]]
         
     def __call__(self, parameters, config={'level': 1}):
-        return [[self.posterior(parameters[0],config["level"])]]
+        return self.posterior(parameters[0],config["level"])
 
     def supports_evaluate(self):
         return True

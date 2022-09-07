@@ -47,7 +47,7 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
 
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-    samps->WriteToFile(results_path + "_mlda.h5");
+    samps->WriteToFile(results_path + "5_mlda.h5");
   }
 
   { // Single level MCMC Reference
@@ -73,52 +73,19 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
 
       std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-      samps->WriteToFile(results_path + "_l" + std::to_string(level) + ".h5");
+      samps->WriteToFile(results_path + "5_l" + std::to_string(level) + ".h5");
     }
   }
 }
 
 void example1(){
-  int n = 10;
-  int num_samples = 1000;
-  int burn_in = 0;
-  std::vector<double> proposal_var = {0.1, 0.1, 0.1};
-
-  std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples_10";
-
-  std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
-  {
-    json config;
-    config["level"] = 1;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-  {
-    json config;
-    config["level"] = 2;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-  {
-    json config;
-    config["level"] = 3;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-
-  Eigen::VectorXd startPt(n);
-  startPt.setConstant(1.0/double(10));
-  startPt[0] = 0.9;
-  startPt.normalize();
-
-  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
-}
-
-void example2(){
   int n = 3;
-  int num_samples = 1e3;
+  int num_samples = 1e4;
   int burn_in = 1e2;
 
-  double proposal_var_l0 = 12;
-  double proposal_var_l1 = 6;
-  double proposal_var_l2 = 3;
+  double proposal_var_l0 = 2;
+  double proposal_var_l1 = 2;
+  double proposal_var_l2 = 2;
 
   std::vector<double> proposal_var = {proposal_var_l0, proposal_var_l1, proposal_var_l2};
 
@@ -141,14 +108,14 @@ void example2(){
     sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
   }
 
+
   Eigen::VectorXd startPt(3);
-  startPt << 127, 127, 197;
+  startPt << 127, 127, 127;
   MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
 }
 
 
 int main(){
-  //example1();
-  example2();
+  example1();
   return 0;
 }
