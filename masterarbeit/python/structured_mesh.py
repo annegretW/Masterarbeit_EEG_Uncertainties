@@ -57,8 +57,6 @@ class StructuredMesh():
         self.labels = np.ravel(labels_array, order='F')
         self.centers = centers_array[idx_elements_inside,:]
 
-        print(self.centers)
-
         print("\nCreated new mesh with \n " + str(len(self.nodes)) + " nodes \n " + str(len(self.elements)) + " elements\n")
 
     def find_next_node(self, point):
@@ -73,10 +71,23 @@ class StructuredMesh():
         #        next = i
         #return next
 
-
+    def find_next_center_index(self, point):
+        index = np.linalg.norm(np.abs(self.centers[0] - point),axis=1).argmin()
+        return index
 
     def find_next_center(self, point):
         p = np.array(point) - np.array(self.center) + np.max(self.radii)
         p = np.divmod(p, self.cell_size)[0]
         next = p*self.cell_size + self.cell_size/2 + np.array(self.center) - np.max(self.radii)
         return next
+
+def find_next_center_index(centers, point):
+    index = np.linalg.norm(np.abs(centers - point),axis=1).argmin()
+    return index
+
+def find_next_center(center, radii, cells_per_dim, point):
+    cell_size = 2*np.max(radii)/cells_per_dim
+    p = np.array(point) - np.array(center) + np.max(radii)
+    p = np.divmod(p, cell_size)[0]
+    next = p*cell_size + cell_size/2 + np.array(center) - np.max(radii)
+    return next

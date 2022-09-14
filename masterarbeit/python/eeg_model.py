@@ -5,14 +5,13 @@ import numpy as np
 import transfer_matrix
 from leadfield import create_leadfield, create_transfer_matrix
 import structured_mesh as msh
+import utility_functions
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
 import sys
 sys.path.append(duneuropy_path)
 import duneuropy as dp
-
-electrodes_path='../data/electrodes.txt'
 
 class EEGModel(umbridge.Model):
     def __init__(self, b_ref):
@@ -180,21 +179,8 @@ class EEGModelNew(umbridge.Model):
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
 class EEGModelFromFile(umbridge.Model):
-    def __init__(self, b_ref):
+    def __init__(self, b_ref, sigma_0, leadfield_path_list, mesh_path_list, cells_per_dim, center, radii, conductivities):
         super(EEGModelFromFile, self).__init__()
-
-        # parameters
-        cells_per_dim = [64]
-        sigma = 0.005
-        center = (127,127,127)
-        radii = (92,86,80,78)
-
-        leadfield_path_list = ["../data/leadfield_64.npz"]
-
-        #mesh_path_list = [
-        #    "../data/mesh_8.npz", 
-        #    "../data/mesh_16.npz", 
-        #    "../data/mesh_32.npz"]
 
         # initialize lists
         self.mesh = []
@@ -210,31 +196,33 @@ class EEGModelFromFile(umbridge.Model):
         self.b_ref = b_ref
 
         # posterior variance
-        self.sigma = sigma
+        self.sigma = [sigma_0, sigma_0, sigma_0]
 
 
     def get_input_sizes(self):
         return [3]
 
     def get_output_sizes(self):
-        return [1, 1]
+        return [1]
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, level):
         i = level-1
 
         # find next node to theta on the mesh and select the according leadfield
-        index = self.mesh[i].find_next_node(theta)
+        #print(theta)
+        index = self.mesh[i].find_next_center_index(theta)
+        #print(index)
         b = self.leadfield_matrix[i][index]
-        node = self.mesh[i].nodes[i]
+        #node = self.mesh[i].nodes[i]
 
         # calculate the posterior as a normal distribution
-        posterior = -(1/(2*self.sigma**2))*(np.linalg.norm(np.array(self.b_ref)-np.array(b), 2))**2
+        posterior = -(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref)-np.array(b), 2))**2
 
         return posterior
         
     def __call__(self, parameters, config={'level': 1}):
-        return [[self.posterior(parameters[0],config["level"])],[0]]
+        return [[self.posterior(parameters[0],config["level"])]]
 
     def supports_evaluate(self):
         return True
@@ -251,25 +239,11 @@ class EEGModelFromFile(umbridge.Model):
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
 class EEGModelTransferFromFile(umbridge.Model):
-    def __init__(self, b_ref):
+    def __init__(self, b_ref, sigma_0, transfer_path_list, mesh_path_list, cells_per_dim, center, radii, conductivities):
         super(EEGModelTransferFromFile, self).__init__()
 
         # parameters
-        cells_per_dim = [16,32,64]
-        sigma = [0.05,0.01,0.005]
-        center = (127,127,127)
-        radii = (92,86,80,78)
-        conductivities = [0.00043,0.00001,0.00179,0.00033]
-
-        transfer_path_list = [
-            "../data/transfer_matrix_16.npz",
-            "../data/transfer_matrix_32.npz",
-            "../data/transfer_matrix_64.npz"]
-
-        #mesh_path_list = [
-        #    "../data/mesh_8.npz", 
-        #    "../data/mesh_16.npz", 
-        #    "../data/mesh_32.npz"]
+        sigma = [10*sigma_0,5*sigma_0,sigma_0]
 
         # initialize lists
         self.mesh = []
@@ -278,8 +252,8 @@ class EEGModelTransferFromFile(umbridge.Model):
 
         for i in range(len(cells_per_dim)):
             # create mesh
-            #self.mesh.append(np.load(mesh_path_list[i], allow_pickle=True)['arr_0'])
-            self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
+            self.mesh.append(np.load(mesh_path_list[i], allow_pickle=True))
+            #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
             self.transfer_matrix.append(np.load(transfer_path_list[i])['arr_0'])
 
             meg_config = {
@@ -288,11 +262,11 @@ class EEGModelTransferFromFile(umbridge.Model):
                 'element_type' : 'hexahedron',
                 'volume_conductor' : {
                     'grid' : {
-                        'elements' : self.mesh[i].elements.tolist(),
-                        'nodes' : self.mesh[i].nodes.tolist()
+                        'elements' : self.mesh[i]['elements'].tolist(),
+                        'nodes' : self.mesh[i]['nodes'].tolist()
                     },
                     'tensors' : {
-                        'labels' : self.mesh[i].labels.tolist(),
+                        'labels' : self.mesh[i]['labels'].tolist(),
                         'conductivities' : conductivities
                     }
                 },
@@ -307,9 +281,9 @@ class EEGModelTransferFromFile(umbridge.Model):
         
         # posterior variance
         self.sigma = sigma
-
         self.center = center
         self.radii = radii
+        self.cells_per_dim = cells_per_dim
         
         source_model_config = {
         'type' : 'venant',
@@ -340,16 +314,14 @@ class EEGModelTransferFromFile(umbridge.Model):
     def posterior(self, theta, level):
         i = level-1
 
-        next_dipole_pos = self.mesh[i].find_next_center(theta) 
+        next_dipole_pos = msh.find_next_center(self.center, self.radii, self.cells_per_dim[i], theta) 
+        #next_dipole_pos = theta
         dist = np.sqrt(sum([(x-c)**2 for x,c in zip(next_dipole_pos, self.center)]))
 
         if dist > np.max(self.radii):
             return 0
 
-        rho = np.arccos((next_dipole_pos[2]-self.mesh[i].center[2])/np.max(self.mesh[i].radii))
-        phi = np.arctan2(next_dipole_pos[1]-self.mesh[i].center[1], next_dipole_pos[0]-self.mesh[i].center[0])
-        next_dipole = dp.Dipole3d(next_dipole_pos,[np.sin(phi)*np.cos(rho),np.sin(phi)*np.sin(rho),np.cos(phi)])
-
+        next_dipole = utility_functions.get_dipole(next_dipole_pos)
         b = self.meg_drivers[i].applyEEGTransfer(self.transfer_matrix[i],[next_dipole],self.config)[0]
 
         # calculate the posterior as a normal distribution
@@ -357,10 +329,11 @@ class EEGModelTransferFromFile(umbridge.Model):
 
         #print([next_dipole_pos[0],next_dipole_pos[1],next_dipole_pos[2]])
         #return [[posterior],[next_dipole_pos[0],next_dipole_pos[1],next_dipole_pos[2]]]
-        return [[posterior]]
+        #print(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))
+        return posterior
         
     def __call__(self, parameters, config={'level': 1}):
-        return self.posterior(parameters[0],config["level"])
+        return [[self.posterior(parameters[0],config["level"])]]
 
     def supports_evaluate(self):
         return True

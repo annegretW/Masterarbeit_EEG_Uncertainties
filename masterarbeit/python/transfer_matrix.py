@@ -18,9 +18,24 @@ electrodes_path='../data/electrodes.txt'
 
 def create_transfer_matrix(mesh_path,tensors_path,electrodes_path):
     # create driver
-    volume_conductor_cfg = {'grid.filename' : mesh_path, 'tensors.filename' : tensors_path}
-    driver_cfg = {'type' : 'fitted', 'solver_type' : 'cg', 'element_type' : 'tetrahedron', 'post_process' : 'true', 'subtract_mean' : 'true'}
-    solver_cfg = {'reduction' : '1e-14', 'edge_norm_type' : 'houston', 'penalty' : '20', 'scheme' : 'sipg', 'weights' : 'tensorOnly'}
+    volume_conductor_cfg = {
+        'grid.filename' : mesh_path, 
+        'tensors.filename' : tensors_path
+        }
+    driver_cfg = {
+        'type' : 'fitted', 
+        'solver_type' : 'cg', 
+        'element_type' : 'tetrahedron', 
+        'post_process' : True, 
+        'subtract_mean' : True
+        }
+    solver_cfg = {
+        'reduction' : '1e-14', 
+        'edge_norm_type' : 'houston', 
+        'penalty' : '20', 
+        'scheme' : 'sipg', 
+        'weights' : 'tensorOnly'}
+        
     driver_cfg['solver'] = solver_cfg
     driver_cfg['volume_conductor'] = volume_conductor_cfg
 

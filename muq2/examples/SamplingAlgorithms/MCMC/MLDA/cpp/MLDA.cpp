@@ -22,15 +22,14 @@ using namespace muq::SamplingAlgorithms;
 using namespace muq::Utilities;
 
 void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
-  { // MLDA
+  /*{ // MLDA
     pt::ptree ptProposal;
     ptProposal.put("Subsampling_0", 10); // Subsampling on level 0
-    ptProposal.put("Subsampling_1", 3); // Subsampling on level 1
+    ptProposal.put("Subsampling_1", 5); // Subsampling on level 1
 
     ptProposal.put("Proposal_Variance_0", proposal_var[0]); // Proposal Variance on coarsest level
     ptProposal.put("Proposal_Variance_1", proposal_var[1]);
     ptProposal.put("Proposal_Variance_2", proposal_var[2]);
-
     auto proposal = std::make_shared<MLDAProposal>(ptProposal, sampling_problems.size()-1, sampling_problems);
 
     pt::ptree ptBlockID;
@@ -47,8 +46,8 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
 
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-    samps->WriteToFile(results_path + "5_mlda.h5");
-  }
+    samps->WriteToFile(results_path + "_mlda.h5");
+  }*/
 
   { // Single level MCMC Reference
     for (int level = 0; level < sampling_problems.size(); level++) {
@@ -73,7 +72,7 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
 
       std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-      samps->WriteToFile(results_path + "5_l" + std::to_string(level) + ".h5");
+      samps->WriteToFile(results_path + "_l" + std::to_string(level) + ".h5");
     }
   }
 }
@@ -81,15 +80,11 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
 void example1(){
   int n = 3;
   int num_samples = 1e4;
-  int burn_in = 1e2;
+  int burn_in = 0;
 
-  double proposal_var_l0 = 2;
-  double proposal_var_l1 = 2;
-  double proposal_var_l2 = 2;
+  std::vector<double> proposal_var = {5,5,5};
 
-  std::vector<double> proposal_var = {proposal_var_l0, proposal_var_l1, proposal_var_l2};
-
-  std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples";
+  std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
 
   std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
   {
