@@ -6,19 +6,24 @@
 # I. Import libraries
 import numpy as np
 import pandas as pd
-import seaborn as sb
+#import seaborn as sb
 import matplotlib.pyplot as plt
+duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
+
+import sys
+sys.path.append(duneuropy_path)
 import duneuropy as dp
+import os
 import os
 
 # II. Define input files
-folder_input = '/path/to/input/'
-folder_output = '/path/to/output/'
-filename_grid = os.path.join(folder_input, 'sphere_tet_mesh_4c.msh')
-filename_tensors = os.path.join(folder_input, 'sphere_4c.cond')
-filename_dipoles = os.path.join(folder_input, 'sphere_dipoles.txt')
-filename_analytical = os.path.join(folder_input, 'sphere_eeg_analytical.txt')
-filename_electrodes = os.path.join(folder_input, 'sphere_electrodes.txt')
+folder_input = '../data/'
+folder_output = '../results/'
+filename_grid = os.path.join(folder_input, 'tet_mesh.msh')
+filename_tensors = os.path.join(folder_input, 'conductivities.txt')
+#filename_dipoles = os.path.join(folder_input, 'sphere_dipoles.txt')
+#filename_analytical = os.path.join(folder_input, 'sphere_eeg_analytical.txt')
+filename_electrodes = os.path.join(folder_input, 'electrodes_1005.txt')
 
 # III. Create MEEG driver
 # We create the driver object which will read the mesh along with the conductivity tensors from the provided files
@@ -84,7 +89,7 @@ source_model_configs = {
 }
 
 # Read dipoles
-dipoles = dp.read_dipoles_3d(filename_dipoles)
+dipoles = [dp.Dipole3d([140,140,140], [0.57735, 0.57735, 0.57735])]
 
 # Apply the transfer matrix
 solutions = dict()
@@ -96,21 +101,23 @@ for sm in source_model_configs:
                 })
     solutions[sm] = np.array(lf[0])
 
+print(solutions)
 # VI. Comparison with (quasi-)analytical solution & visualization
 # Load the analytical solution
-analytical = np.transpose(np.genfromtxt(filename_analytical,delimiter= ''))
+#analytical = np.transpose(np.genfromtxt(filename_analytical,delimiter= ''))
 
 # compute errors between numerical and analytical solution:
 # RDM(u,v) = \left\|\frac{u}{\|u\|}-\frac{v}{\|v\|}\right\|
 # MAG(u,v) = \frac{\|u\|}{\|v\|}
 # lnMAG(u,v)= \ln(MAG(u,v))
-norm = lambda x : np.linalg.norm(x, axis=1)
-nnum = {sm : norm(solutions[sm]) for sm in solutions}
-nana = norm(analytical)
-lnmag = {sm: np.log(nnum[sm]/nana)  for sm in nnum}
-rdm = {sm: norm(solutions[sm]/nnum[sm][:, None]-analytical/nana[:, None]) for sm in solutions}
+#norm = lambda x : np.linalg.norm(x, axis=1)
+#nnum = {sm : norm(solutions[sm]) for sm in solutions}
+#nana = norm(analytical)
+#lnmag = {sm: np.log(nnum[sm]/nana)  for sm in nnum}
+#rdm = {sm: norm(solutions[sm]/nnum[sm][:, None]-analytical/nana[:, None]) for sm in solutions}
 
 # Plot errors
+'''
 eccentricities = [np.transpose(np.round(np.linalg.norm(np.array(dip.position())-(127,127,127))/78,3)) for dip in dipoles]
 df = pd.concat([pd.DataFrame({
         'eccentricity' : eccentricities,
@@ -152,3 +159,4 @@ pvtk.write(os.path.join(folder_output, 'sphere_cg_tet_transfer_solution_venant')
 
 # Print a list of relevant publications
 driver.print_citations()
+'''

@@ -31,14 +31,15 @@ def analytical_solution(dipole, mesh_path, tensors_path, electrodes_path):
   driver_cfg['volume_conductor'] = volume_conductor_cfg
 
   print('Creating driver')
-  meeg_driver = dp.MEEGDriver3d(driver_cfg)
+  meeg_driver = dp.MEEGDriver2d(driver_cfg)
   print('Driver created')
 
   # set electrodes
   print('Setting electrodes')
   #electrode_cfg = {'type' : 'closest_subentity_center', 'codims' : '3'}
   electrode_cfg = {'type' : 'normal'}
-  electrodes = dp.read_field_vectors_3d(electrodes_path)
+  #electrodes = dp.read_field_vectors_2d(electrodes_path)
+  electrodes = np.load(electrodes_path)["arr_0"]
   meeg_driver.setElectrodes(electrodes, electrode_cfg)
   print('Electodes set')
 

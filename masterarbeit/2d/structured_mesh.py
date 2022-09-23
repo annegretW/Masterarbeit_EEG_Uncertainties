@@ -15,10 +15,10 @@ class StructuredMesh():
 
         # create nodes array for bounding box
         nodes = np.meshgrid(*[np.linspace(ll,ur,num=N+1) for ll,ur in zip(lower_left, upper_right)], indexing='ij')
-        nodes_array = np.reshape(np.transpose(np.array(nodes, order='F')),[nr_nodes**3, 3], order = 'C')
+        nodes_array = np.reshape(np.transpose(np.array(nodes, order='F')),[nr_nodes**2, 2], order = 'C')
         
         # map elements to nodes in bounding box
-        elements = np.empty(shape=(N**3,8))
+        elements = np.empty(shape=(N**2,4))
         idx_nodes = np.arange(nodes_array.shape[0])
         idx_back = idx_nodes[-nr_nodes**2:idx_nodes.size]
         idx_right = idx_nodes[idx_nodes%nr_nodes==nr_nodes-1]

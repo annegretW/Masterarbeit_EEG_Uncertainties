@@ -32,7 +32,8 @@ def create_leadfield_matrix(mesh_path,tensors_path,electrodes_path,dipoles_path,
 
     # set electrodes
     print('Setting electrodes')
-    electrode_cfg = {'type' : 'closest_subentity_center', 'codims' : '3'}
+    #electrode_cfg = {'type' : 'closest_subentity_center', 'codims' : '3'}
+    electrode_cfg = {'type' : 'normal'}
     electrodes = dp.read_field_vectors_3d(electrodes_path)[0:m]
     meeg_driver.setElectrodes(electrodes, electrode_cfg)
     print('Electodes set')

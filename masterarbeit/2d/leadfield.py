@@ -7,30 +7,26 @@ sys.path.append(duneuropy_path)
 import duneuropy as dp
 
 
-def create_leadfield(mesh, conductivities, electrodes_path, dipoles):
+def create_leadfield(mesh_path, tensors_path, electrodes_path, dipoles):
     # Create MEG driver
     config = {
         'type' : 'fitted',
         'solver_type' : 'cg',
-        'element_type' : 'hexahedron',
-        'volume_conductor' : {
-             'grid' : {
-                'elements' : mesh.elements.tolist(),
-                'nodes' : mesh.nodes.tolist()
-               },
-               'tensors' : {
-                'labels' : mesh.labels.tolist(),
-                'conductivities' : conductivities
-            }
+        'element_type' : 'tetrahedron',
+        'volume_conductor': {
+            'grid.filename' : mesh_path, 
+            'tensors.filename' : tensors_path
          },
          'post_process' : 'true', 
          'subtract_mean' : 'true'
     }
-    meg_driver = dp.MEEGDriver3d(config)
+    meg_driver = dp.MEEGDriver2d(config)
 
     # Set electrode positions
-    electrodes = np.genfromtxt(electrodes_path,delimiter=None) 
-    electrodes = [dp.FieldVector3D(t) for t in electrodes.tolist()]
+    # electrodes = np.genfromtxt(electrodes_path,delimiter=None) 
+    electrodes = np.load(electrodes_path)["arr_0"]
+    electrodes = electrodes[:,0:2] # ensure 2d
+    electrodes = [dp.FieldVector2D(t) for t in electrodes.tolist()]
     #electrode_config = {
     #    'type' : 'closest_subentity_center',
     #    'codims' : [3]
@@ -46,7 +42,7 @@ def create_leadfield(mesh, conductivities, electrodes_path, dipoles):
     # Compute leadfield matrix
     source_model_config_v = {
         'type' : 'venant',
-        'numberOfMoments' : 3,
+        'numberOfMoments' : 2,
         'referenceLength' : 20,
         'weightingExponent' : 1,
         'relaxationFactor' : 1e-6,
@@ -62,7 +58,7 @@ def create_leadfield(mesh, conductivities, electrodes_path, dipoles):
 
     driver_config = {
         'solver.reduction' : 1e-10,
-        'source_model' : source_model_config_s,
+        'source_model' : source_model_config_v,
         'post_process' : True,
         'subtract_mean' : True
     }
@@ -71,34 +67,30 @@ def create_leadfield(mesh, conductivities, electrodes_path, dipoles):
 
     return transfer_matrix, leadfield_matrix
 
-def create_transfer_matrix(mesh, conductivities, electrodes_path):
-    # Create MEG driver
+def create_transfer_matrix(mesh_path, tensors_path, electrodes_path):
     config = {
         'type' : 'fitted',
         'solver_type' : 'cg',
-        'element_type' : 'hexahedron',
-        'volume_conductor' : {
-             'grid' : {
-                'elements' : mesh.elements.tolist(),
-                'nodes' : mesh.nodes.tolist()
-               },
-               'tensors' : {
-                'labels' : mesh.labels.tolist(),
-                'conductivities' : conductivities
-            }
+        'element_type' : 'tetrahedron',
+        'volume_conductor': {
+            'grid.filename' : mesh_path, 
+            'tensors.filename' : tensors_path
          },
          'post_process' : 'true', 
          'subtract_mean' : 'true'
     }
-    meg_driver = dp.MEEGDriver3d(config)
+    meg_driver = dp.MEEGDriver2d(config)
 
     # Set electrode positions
-    electrodes = np.genfromtxt(electrodes_path,delimiter=None) 
-    electrodes = [dp.FieldVector3D(t) for t in electrodes.tolist()]
-    electrode_config = {
-        'type' : 'closest_subentity_center',
-        'codims' : [3]
-    }
+    # electrodes = np.genfromtxt(electrodes_path,delimiter=None) 
+    electrodes = np.load(electrodes_path)["arr_0"]
+    electrodes = electrodes[:,0:2] # ensure 2d
+    electrodes = [dp.FieldVector2D(t) for t in electrodes.tolist()]
+    #electrode_config = {
+    #    'type' : 'closest_subentity_center',
+    #    'codims' : [3]
+    #}
+    electrode_config = {'type': 'normal'}
     meg_driver.setElectrodes(electrodes, electrode_config)
 
     # Compute transfer matrix

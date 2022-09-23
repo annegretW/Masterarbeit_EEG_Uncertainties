@@ -25,10 +25,10 @@ def save_leadfield_matrix(electrodes_path, path_leadfield, cells_per_dim):
     for c in mesh.centers[0]:
        dipoles.append(get_dipole(c))
 
-    # dipoles = [get_dipole([110,120,130]),get_dipole([130,120,110])]
+    #dipoles = [get_dipole([110,120,130]),get_dipole([130,120,110])]
     
-    leadfield_matrix = create_leadfield(mesh, conductivities, electrodes_path, dipoles)[0]
-
+    leadfield_matrix = create_leadfield(mesh, conductivities, electrodes_path, dipoles)[1]
+    #print(np.transpose(leadfield_matrix)[0])
     np.savez_compressed(path_leadfield, leadfield_matrix)
 
 
@@ -75,8 +75,68 @@ def calc_disturbed_sensor_values(s_ref, electrodes_path):
     tensors_path = "../data/electrodes_1005.txt"
     b_ref = analytical_solution(s_ref, mesh_path, tensors_path, electrodes_path)
 
+    '''
+    # TEST
+    conductivities = [0.00043,0.00001,0.00179,0.00033]
+    mesh = np.load('../data/mesh_64.npz')
+
+    solver_cfg = {
+        'reduction' : '1e-14', 
+        'edge_norm_type' : 'houston', 
+        'penalty' : '20', 
+        'scheme' : 'sipg', 
+        'weights' : 'tensorOnly'}
+
+    source_model_cfg = {
+            'type' : 'venant',
+            'numberOfMoments' : 3,
+            'referenceLength' : 20,
+            'weightingExponent' : 1,
+            'relaxationFactor' : 1e-6,
+            'mixedMoments' : True,
+            'restrict' : True,
+            'initialization' : 'closest_vertex'
+            }
+
+    T2 = np.load("../data/transfer_matrix_1005_64.npz")['arr_0']
+
+    config = {
+        'solver.reduction' : 1e-10,
+        'source_model' : source_model_cfg,
+        'post_process' : True,
+        'subtract_mean' : True
+    }
+
+    elements = mesh['elements']
+    nodes = mesh['nodes']
+    labels = mesh['labels']
+
+    meg_config = {
+        'type' : 'fitted',
+        'solver_type' : 'cg',
+        'element_type' : 'hexahedron',
+        'volume_conductor' : {
+            'grid' : {
+                'elements' : elements.tolist(),
+                'nodes' : nodes.tolist()
+            },
+            'tensors' : {
+                'labels' : labels.tolist(),
+                'conductivities' : conductivities
+            }
+        },
+        'post_process' : 'true', 
+        'subtract_mean' : 'true'
+    }
+    meg_driver = dp.MEEGDriver3d(meg_config)
+
+    b_ref = meg_driver.applyEEGTransfer(T2,[s_ref],config)[0][0]
+    print(b_ref)
+    # TEST ENDE
+    '''
+
     # Disturb sensor values
-    sigma = 0.005*np.amax(np.absolute(b_ref))
+    sigma = 0.05*np.amax(np.absolute(b_ref))
     print("sigma = " + str(sigma))
     #b_ref = np.random.normal(b_ref, sigma)
     #print("Disturbed measurement values at the electrodes:")
@@ -124,3 +184,7 @@ def saveStructuredHexMeshForSphere(N, center, radii, path):
     elements_inside = key[index].reshape(elements_inside.shape)
 
     np.savez_compressed(path, elements=elements_inside.astype(int),nodes=nodes_array[idx_nodes_inside.astype(int),:],labels=labels_array,centers=centers_array[idx_elements_inside,:])
+
+def relative_error(numerical_solution, analytical_solution):
+  assert len(numerical_solution) == len(analytical_solution)
+  return np.linalg.norm(np.array(numerical_solution) - np.array(analytical_solution)) / np.linalg.norm(analytical_solution)

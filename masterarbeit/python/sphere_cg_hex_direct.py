@@ -18,7 +18,7 @@ import os
 folder_input = '../data/'
 folder_output = '../results/'
 #filename_dipoles = os.path.join(folder_input, 'sphere_dipoles.txt')
-filename_electrodes = os.path.join(folder_input, 'electrodes_1020.txt')
+filename_electrodes = os.path.join(folder_input, 'electrodes_1005.txt')
 center = (127,127,127)
 radii = (92,86,80,78)
 conductivities = [0.00043,0.00001,0.00179,0.00033]
@@ -113,7 +113,7 @@ eeg_transfer_config = {
 
 transfer_matrix, eeg_transfer_computation_information = driver.computeEEGTransferMatrix(eeg_transfer_config)
 
-np.savez_compressed("../data/transfer_matrix_128_hex", transfer_matrix)
+#np.savez_compressed("../data/transfer_matrix_128_hex", transfer_matrix)
 
 # V. Compute EEG leadfield
 #Create source model configurations (St. Venant approach)post_processpost_process
@@ -129,13 +129,14 @@ source_model_config = {
 }
 
 # Read dipoles
-dipoles = []
-for n in nodes:
-    dipoles.append(utility_functions.get_dipole(n))
+dipoles = [dp.Dipole3d([134, 134, 134], [0.57735, 0.57735, 0.57735])]
+
+#for n in nodes:
+#    dipoles.append(utility_functions.get_dipole(n))
 
 # Compute leadfield for the first test dipole
 x = driver.makeDomainFunction()
-driver.solveEEGForward(dipoles, x, {
+driver.solveEEGForward(dipoles[0], x, {
             'solver.reduction' : 1e-10,
             'source_model' : source_model_config,
             'post_process' : True,
@@ -144,4 +145,5 @@ driver.solveEEGForward(dipoles, x, {
 lf = driver.evaluateAtElectrodes(x)
 print(lf)
 lf -= np.mean(lf)
+lf = np.array(lf)
 print(lf)

@@ -12,16 +12,19 @@ import sys
 sys.path.append(duneuropy_path)
 import duneuropy as dp
 
+def relative_error(numerical_solution, analytical_solution):
+  assert len(numerical_solution) == len(analytical_solution)
+  return np.linalg.norm(np.array(numerical_solution) - np.array(analytical_solution)) / np.linalg.norm(analytical_solution)
+
 # Calc correct sensor values
 mesh_path='../data/tet_mesh.msh'
 tensors_path='../data/conductivities.txt'
-electrodes_path='../data/electrodes_1010.txt'
+electrodes_path='../data/electrodes_1005.txt'
 
 conductivities = [0.00043,0.00001,0.00179,0.00033]
 
-point = [114.0625, 102.5625,  39.3125]
-point1 = [125.34709414, 146.43341941, 152.30150197]
-point2 = [124.93838629, 103.32541128, 110.73780151]
+point = [110,120,130]
+point1 = [117.00655718, 122.71468457, 128.454283]
 
 # create mesh
 mesh = np.load('../data/mesh_64.npz')
@@ -35,11 +38,8 @@ s_val0 = utility_functions.get_dipole(find_next_center(center, radii, cells_per_
 print(s_val0)
 s_val1 = utility_functions.get_dipole(find_next_center(center, radii, cells_per_dim, point1))
 print(s_val1)
-s_val2 = utility_functions.get_dipole(find_next_center(center, radii, cells_per_dim, point2))
-print(s_val2)
 
-b_ref = utility_functions.calc_disturbed_sensor_values(s_ref, "../data/electrodes_1005.txt")[0]
-print(b_ref)
+b_ref = utility_functions.calc_disturbed_sensor_values(s_ref, "../data/electrodes_1010.txt")[0]
 
 solver_cfg = {
     'reduction' : '1e-14', 
@@ -59,7 +59,7 @@ source_model_cfg = {
         'initialization' : 'closest_vertex'
         }
 
-#T2 = np.load("../data/transfer_matrix_1010_64.npz")['arr_0']
+T2 = np.load("../data/transfer_matrix_1010_64.npz")['arr_0']
 
 config = {
     'solver.reduction' : 1e-10,
@@ -91,32 +91,53 @@ meg_config = {
  }
 meg_driver = dp.MEEGDriver3d(meg_config)
 
-'''
 b_val0 = meg_driver.applyEEGTransfer(T2,[s_val0],config)[0]
 b_val1 = meg_driver.applyEEGTransfer(T2,[s_val1],config)[0]
-b_val2 = meg_driver.applyEEGTransfer(T2,[s_val2],config)[0]
-'''
 
-L = np.transpose(np.load("../data/leadfield_matrix_1005_64.npz")['arr_0'])
+print("MEANS")
+print(np.mean(b_ref))
+print(np.mean(b_val0))
 
-index = msh.find_next_center_index(mesh['centers'][0], point)
-print(index)
-b_val0 = L[index]
-print(mesh['centers'][0][index])
-index = msh.find_next_center_index(mesh['centers'][0], point1)
-print(index)
-b_val1 = L[index]
-print(mesh['centers'][0][index])
-index = msh.find_next_center_index(mesh['centers'][0], point2)
-print(index)
-b_val2 = L[index]
-print(mesh['centers'][0][index])
-
+print("Transfer matrix")
 print(np.amax(np.array(b_ref)-np.array(b_val0)))
 print(np.linalg.norm(np.array(b_ref)-np.array(b_val0), 2))
 print("-------------------------------------------------------------")
 print(np.amax(np.array(b_ref)-np.array(b_val1)))
 print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), 2))
 print("-------------------------------------------------------------")
-print(np.amax(np.array(b_ref)-np.array(b_val2)))
-print(np.linalg.norm(np.array(b_ref)-np.array(b_val2), 2))
+
+L = np.load("../data/leadfield_matrix_1010_64.npz")['arr_0']
+print(L) 
+
+index = msh.find_next_center_index(mesh['centers'][0], point)
+print(index)
+b_val0 = L[index]
+
+print(mesh['centers'][0][index])
+index = msh.find_next_center_index(mesh['centers'][0], point1)
+print(index)
+b_val1 = L[index]
+
+print(mesh['centers'][0][index])
+
+#b_ref_new = b_ref-b_ref[0]*np.ones(len(b_ref))
+#b_ref_new -= np.mean(b_ref_new)
+#b_val0 -= np.mean(b_val0)
+#b_val1 -= np.mean(b_val1)
+
+#print(b_ref)
+print("Leadfield matrix")
+print(np.amax(np.array(b_ref)-np.array(b_val0)))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val0), 2))
+print("-------------------------------------------------------------")
+print(np.amax(np.array(b_ref)-np.array(b_val1)))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), 2))
+print("-------------------------------------------------------------")
+
+
+print(b_ref)
+print(b_val0)
+error = relative_error(b_ref, b_val0)
+print(error)
+error = relative_error(b_ref, b_val1)
+print(error)
