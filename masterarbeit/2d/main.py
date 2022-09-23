@@ -37,7 +37,7 @@ b, sigma_0 = uf.calc_disturbed_sensor_values(s_ref, "data/electrodes.npz")
 
 b_ref = [b, b, b]
 
-sigma = [4*sigma_0, 2*sigma_0, sigma_0]
+sigma = [16*sigma_0, 8*sigma_0, 4*sigma_0]
 
 leadfield_path_list = [
         "data/leadfield_matrix_1.npz",

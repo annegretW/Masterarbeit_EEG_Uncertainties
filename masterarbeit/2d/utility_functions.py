@@ -12,21 +12,21 @@ sys.path.append(duneuropy_path)
 import duneuropy as dp
 
 
-def save_leadfield_matrix(electrodes_path, mesh_path, path_leadfield):
-    conductivities_path = 'data/conductivities.txt'
-
-    # create mesh
+def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_leadfield):
+    # read mesh
     mesh = meshio.read(mesh_path)
 
-    # set dipoles
+    # set mesh nodes as dipoles
     dipoles = []
     for p in mesh.points:
-        print(p)
         dipoles.append(get_dipole(p[0:2],[127,127]))
 
+    # generate leadfield
     leadfield_matrix = create_leadfield(mesh_path , conductivities_path, electrodes_path, dipoles)[1]
 
+    # save leadfield
     np.savez_compressed(path_leadfield, leadfield_matrix)
+
 
 def get_dipole(point, center):
     dim = len(point)
@@ -61,7 +61,7 @@ def get_electrodes(mesh):
     print(len(electrodes))
     np.savez_compressed('data/electrodes', electrodes)
 
-def calc_disturbed_sensor_values(s_ref, electrodes_path):
+def calc_disturbed_sensor_values(s_ref, electrodes_path, relative_noise):
     print("#################################################################")
     print("Simulate disturbed sensor values for a given dipole.")
     print("################################################################# \n")
@@ -90,11 +90,10 @@ def calc_disturbed_sensor_values(s_ref, electrodes_path):
     }
 
     T, meg_driver = create_transfer_matrix(mesh_path, tensors_path, electrodes_path)
-    b_ref = meg_driver.applyEEGTransfer(T,[s_ref],config)[0]
-    print(b_ref)
+    b_ref = meg_driver.applyEEGTransfer(T,[s_ref],config)[0][0]
 
     # Disturb sensor values
-    sigma = 0.05*np.amax(np.absolute(b_ref))
+    sigma = relative_noise*np.amax(np.absolute(b_ref))
     print("sigma = " + str(sigma))
     #b_ref = np.random.normal(b_ref, sigma)
     #print("Disturbed measurement values at the electrodes:")
