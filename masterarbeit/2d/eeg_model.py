@@ -2,10 +2,10 @@
 
 import umbridge
 import numpy as np
-from leadfield import create_leadfield, create_transfer_matrix
-import structured_mesh as msh
+from scipy import stats
 import utility_functions
 import meshio
+import math
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
@@ -36,18 +36,12 @@ class EEGModelFromFile(umbridge.Model):
             mesh = meshio.read(mesh_path_list[i])
             self.mesh.append(mesh)
             #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
-            print(i)
             self.leadfield_matrix.append(np.load(leadfield_path_list[i])['arr_0'])
 
         # reference values of measurement values
         self.b_ref = b_ref
-        '''for b in b_ref:
-            b= np.array(b)
-            b -= b[0]
-            self.b_ref.append(b)
-        print(self.b_ref)'''
+        self.m = len(b_ref[0])
 
-        print(self.b_ref)
         # posterior variance
         self.sigma = sigma
 
@@ -60,7 +54,13 @@ class EEGModelFromFile(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, level):
+        #print(level)
+        #print(theta)
         i = level-1
+
+        if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
+            #print(theta)
+            return -1e20
 
         # find next node to theta on the mesh and select the according leadfield
         points = np.array(self.mesh[i].points[:,0:2])
@@ -76,9 +76,16 @@ class EEGModelFromFile(umbridge.Model):
         #error = utility_functions.relative_error(self.b_ref, b)
         #error = np.amax(np.absolute(np.array(self.b_ref)-np.array(b)))
         #posterior = -(1/(2*self.sigma[i]**2))*error**2
-        posterior = -(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))**2
-
-        return posterior
+        #posterior = stats.multivariate_normal.pdf(b,mean=self.b_ref[i],cov=self.sigma[i]*np.identity(self.m))
+        #print(posterior)
+        #if posterior!=0:
+        #    posterior = np.log(posterior)
+        #print(posterior)
+        posterior = ((1/(2*self.sigma[i]**2))**(self.m/2))*np.exp(-(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[i]), 2))**2)
+        if posterior==0:
+           return -1e20
+        
+        return np.log(posterior)
         
     def __call__(self, parameters, config={'level': 1}):
         return [[self.posterior(parameters[0],config["level"])]]

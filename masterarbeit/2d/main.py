@@ -1,59 +1,73 @@
-#!/usr/bin/python3
-
-from stat import UF_APPEND
-from webbrowser import get
-import eeg_model
-import umbridge
 import numpy as np
-import utility_functions as uf 
 
-def create_leadfields():
+from os.path import exists
+from umbridge import serve_model
 
-    path_leadfield_matrix = [
+import utility_functions
+import eeg_model
+
+# Set paths
+path_electrodes = "data/electrodes.npz"
+
+path_conductivities = 'data/conductivities.txt'
+
+path_leadfield_matrices = [
         "data/leadfield_matrix_1.npz",
         "data/leadfield_matrix_2.npz",
         "data/leadfield_matrix_3.npz"]
 
-    path_meshs = [
+path_meshs = [
         "data/mesh_1.msh",
         "data/mesh_2.msh",
         "data/mesh_3.msh"]
 
-    electrodes_path = "data/electrodes.npz"
-    
-    for i in range(len(path_leadfield_matrix)):
-        uf.save_leadfield_matrix(electrodes_path, path_meshs[i], path_leadfield_matrix[i])
+l = len(path_leadfield_matrices)
+assert l == len(path_meshs)
 
-import meshio
+m = len(np.load(path_electrodes)["arr_0"])
+print("Number of electrodes: " + str(m))
 
-#create_leadfields()
+# Set parameters
+center = [127,127]
+radii = [92,86,78]
+conductivities = [0.00043,0.00001,0.00179]
 
-# chosen reference source
-point = [150,150]
-s_ref = uf.get_dipole(point,[127,127])
+# Set dipole
+position = [80,150]
+s_ref = utility_functions.get_dipole(position,center)
 
-# create a testmodel
-b, sigma_0 = uf.calc_disturbed_sensor_values(s_ref, "data/electrodes.npz")
+# Set noise
+relative_noise = 0.001
 
-b_ref = [b, b, b]
+# Set variance factor for each level
+var_factor = [32, 16, 1]
 
-sigma = [16*sigma_0, 8*sigma_0, 4*sigma_0]
+# Generate electrode positions if not already existing
+if not exists(path_electrodes):
+    utility_functions.get_electrodes(np.load(path_meshs[-1]))
 
-leadfield_path_list = [
-        "data/leadfield_matrix_1.npz",
-        "data/leadfield_matrix_2.npz",
-        "data/leadfield_matrix_3.npz"]
+# Create leadfield matrices if not already existing
+for i in range(l):
+    if not exists(path_leadfield_matrices[i]):
+        utility_functions.save_leadfield_matrix(
+            path_electrodes, 
+            path_conductivities, 
+            path_meshs[i], 
+            path_leadfield_matrices[i])
 
-mesh_path_list = [
-        "data/mesh_1.msh",
-        "data/mesh_2.msh",
-        "data/mesh_3.msh"]
+# Generate reference values
+b_ref = np.zeros((l,m))
+sigma = np.zeros(l)
 
-testmodel = eeg_model.EEGModelFromFile(
-    b_ref, 
-    sigma, 
-    leadfield_path_list, 
-    mesh_path_list)
+b_ref[0], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes, relative_noise)
+sigma[0] = var_factor[0]*sigma_0
+
+for i in range(1,l):
+    b_ref[i] = b_ref[0]
+    sigma[i] = var_factor[i]*sigma_0 
+
+# Create EEG Model
+testmodel = eeg_model.EEGModelFromFile(b_ref, sigma, path_leadfield_matrices, path_meshs)
 
 # send via localhost
-umbridge.serve_model(testmodel, 4243) 
+serve_model(testmodel, 4243)             

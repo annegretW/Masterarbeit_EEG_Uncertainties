@@ -25,30 +25,38 @@ def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_
     # save leadfield
     np.savez_compressed(path_leadfield, leadfield_matrix)
 
-
-def get_dipole(point, center):
+def get_dipole_orientation(point, center):
     dim = len(point)
     assert(len(center) == dim)
     if dim == 2:
         r = math.sqrt((point[0]-center[0])**2+(point[1]-center[1])**2)
         if(r==0):
-            return dp.Dipole2d(center, [1,0])
+            return [1,0]
         
         rho = math.atan2(point[1]-center[1], point[0]-center[0])
     
         moment = [np.cos(rho),np.sin(rho)]
 
-        return dp.Dipole2d(point, moment)
+        return moment
     else:
         r = math.sqrt((point[0]-center[0])**2+(point[1]-center[1])**2+(point[2]-center[2])**2)
         if(r==0):
-            return dp.Dipole3d(center, [1,0,0])
+            return [1,0,0]
         
         phi = np.arccos((point[2]-center[2])/r)
         rho = math.atan2(point[1]-center[1], point[0]-center[0])
     
         moment = [np.sin(phi)*np.cos(rho),np.sin(phi)*np.sin(rho),np.cos(phi)]
 
+        return moment
+
+def get_dipole(point, center):
+    dim = len(point)
+    assert(len(center) == dim)
+    moment = get_dipole_orientation(point, center)
+    if dim == 2:
+        return dp.Dipole2d(point, moment)
+    else:
         return dp.Dipole3d(point, moment)
 
 def get_electrodes(mesh):
@@ -93,7 +101,7 @@ def calc_disturbed_sensor_values(s_ref, electrodes_path, relative_noise):
     # Disturb sensor values
     sigma = relative_noise*np.amax(np.absolute(b_ref))
     print("sigma = " + str(sigma))
-    b_ref = np.random.normal(b_ref, sigma)
+    #b_ref = np.random.normal(b_ref, sigma)
     #print("Disturbed measurement values at the electrodes:")
     #print(b_ref) 
 
