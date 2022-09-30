@@ -1,7 +1,5 @@
 import numpy as np
-import structured_mesh as msh
 from leadfield import create_leadfield, create_transfer_matrix
-from eeg_transfer_approach_mesh_via_file import analytical_solution
 import math
 import meshio
 
@@ -95,7 +93,7 @@ def calc_disturbed_sensor_values(s_ref, electrodes_path, relative_noise):
     # Disturb sensor values
     sigma = relative_noise*np.amax(np.absolute(b_ref))
     print("sigma = " + str(sigma))
-    #b_ref = np.random.normal(b_ref, sigma)
+    b_ref = np.random.normal(b_ref, sigma)
     #print("Disturbed measurement values at the electrodes:")
     #print(b_ref) 
 
