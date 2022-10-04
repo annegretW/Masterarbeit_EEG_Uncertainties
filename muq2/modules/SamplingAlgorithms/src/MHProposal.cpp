@@ -4,10 +4,13 @@
 
 #include "MUQ/Utilities/AnyHelpers.h"
 
+#include <boost/foreach.hpp>
+
 namespace pt = boost::property_tree;
 using namespace muq::Modeling;
 using namespace muq::SamplingAlgorithms;
 using namespace muq::Utilities;
+
 
 REGISTER_MCMC_PROPOSAL(MHProposal)
 
@@ -18,9 +21,19 @@ MHProposal::MHProposal(pt::ptree const& pt,
   unsigned int problemDim = prob->blockSizes(blockInd);
 
   // compute the (diagonal) covariance for the proposal
-  const Eigen::VectorXd cov = pt.get("ProposalVariance", 1.0)*
-                              Eigen::VectorXd::Ones(problemDim);
+  //const Eigen::VectorXd cov = pt.get("ProposalVariance", 1.0)*
+  //                            Eigen::VectorXd::Ones(problemDim);
+  Eigen::VectorXd cov(problemDim);
 
+  int i = 0;
+  BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("ProposalVariance.")) {
+          cov(i) = stod(v.second.data());
+          i++;
+  }
+
+  //const Eigen::VectorXd cov = pt.get("ProposalVariance", 1.0)*
+  //                            Eigen::VectorXd::Ones(problemDim);
+      
   // created a Gaussian with scaled identity covariance
   proposal = std::make_shared<Gaussian>(Eigen::VectorXd::Zero(problemDim), cov);
 }

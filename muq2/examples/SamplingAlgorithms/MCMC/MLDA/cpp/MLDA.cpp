@@ -15,6 +15,8 @@
 #include "MUQ/Utilities/RandomGenerator.h"
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/foreach.hpp>
+
 
 namespace pt = boost::property_tree;
 using namespace muq::Modeling;
@@ -22,10 +24,11 @@ using namespace muq::SamplingAlgorithms;
 using namespace muq::Utilities;
 
 void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
-  /*{ // MLDA
+  if(1){ // MLDA
     pt::ptree ptProposal;
-    ptProposal.put("Subsampling_0", 10); // Subsampling on level 0
-    ptProposal.put("Subsampling_1", 5); // Subsampling on level 1
+    ptProposal.put("Subsampling_0", 5); // Subsampling on level 0
+    ptProposal.put("Subsampling_1", 3); // Subsampling on level 1
+    ptProposal.put("Subsampling_2", 3); // Subsampling on level 2
 
     ptProposal.put("Proposal_Variance_0", proposal_var[0]); // Proposal Variance on coarsest level
     ptProposal.put("Proposal_Variance_1", proposal_var[1]);
@@ -42,19 +45,34 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
     pt.put("NumSamples", num_samples); // number of MCMC steps
     pt.put("BurnIn", burn_in);
     pt.put("PrintLevel",3);
+
     auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
     samps->WriteToFile(results_path + "_mlda.h5");
-  }*/
+  }
 
-  { // Single level MCMC Reference
+  if(1){ // Single level MCMC Reference
     for (int level = 0; level < sampling_problems.size(); level++) {
       auto problem = sampling_problems[level];
 
-      pt::ptree ptProposal;
-      ptProposal.put("ProposalVariance",proposal_var[level]);
+      pt::ptree ptProposal;      
+      pt::ptree children;
+      pt::ptree child1, child2, child3;
+
+      child1.put("", proposal_var[level]);
+      child2.put("", proposal_var[level]);
+      // child3.put("", proposal_var[level]);
+
+      children.push_back(std::make_pair("", child1));
+      children.push_back(std::make_pair("", child2));
+      // children.push_back(std::make_pair("", child3));
+
+      ptProposal.add_child("ProposalVariance", children);
+
+      //ptProposal.put("Proposal_Variance", proposal_var[level]); 
+
       auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
 
       int x = problem->blockSizes(0);
@@ -77,14 +95,43 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
   }
 }
 
-void example1(){
+void example1(int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
   int n = 3;
-  int num_samples = 1e4;
-  int burn_in = 0;
 
-  std::vector<double> proposal_var = {5,5,5};
+  //std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
 
-  std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
+  std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
+  {
+    json config;
+    config["level"] = 1;
+    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
+  }
+  {
+    json config;
+    config["level"] = 2;
+    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
+  }
+  {
+    json config;
+    config["level"] = 3;
+    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
+  }
+  {
+    json config;
+    config["level"] = 4;
+    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
+  }
+
+
+  Eigen::VectorXd startPt(3);
+  startPt << 127, 127, 127;
+  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
+}
+
+void example2d(int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
+  int n = 2;
+
+  //std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
 
   std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
   {
@@ -103,14 +150,38 @@ void example1(){
     sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
   }
 
-
-  Eigen::VectorXd startPt(3);
-  startPt << 127, 127, 127;
+  Eigen::VectorXd startPt(2);
+  startPt << 127, 127;
   MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
 }
 
+int main(int argc, char *argv[]){
+  int num_samples = atoi(argv[1]);
+  int burn_in = atoi(argv[2]);
 
-int main(){
-  example1();
+  std::string results_path = argv[3];
+
+  double a = atoi(argv[4]);
+  double b = atoi(argv[5]);
+  double c = atoi(argv[6]);
+  double d;
+  std::vector<double> proposal_var;
+
+  if (argc == 7){
+    proposal_var = {a, b, c};
+  }
+   
+  else if (argc == 8){
+    d = atoi(argv[7]);
+    proposal_var = {a, b, c, d};
+  }
+  
+  std::cout << "Running MLDA with the following parameters:" << std::endl;
+  std::cout << "Iterations: " << num_samples << std::endl;
+  std::cout << "Burn In: " << burn_in << std::endl;
+  std::cout << "Levels: " << argc-4 << std::endl;
+
+  example2d(num_samples, burn_in, proposal_var, results_path);
   return 0;
 }
+
