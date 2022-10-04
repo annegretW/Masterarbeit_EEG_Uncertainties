@@ -18,11 +18,11 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
 
     child1.put("", pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
     child2.put("", pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
-    // child3.put("", proposal_var[level]);
+    child3.put("", pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
 
     children.push_back(std::make_pair("", child1));
     children.push_back(std::make_pair("", child2));
-    // children.push_back(std::make_pair("", child3));
+    children.push_back(std::make_pair("", child3));
 
     ptProposal.add_child("ProposalVariance", children);
 
@@ -41,11 +41,11 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
 
     child1.put("", pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
     child2.put("", pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
-    // child3.put("", proposal_var[level]);
+    child3.put("", pt.get<double>("Proposal_Variance_"+ std::to_string(level-1)));
 
     children.push_back(std::make_pair("", child1));
     children.push_back(std::make_pair("", child2));
-    // children.push_back(std::make_pair("", child3));
+    children.push_back(std::make_pair("", child3));
 
     ptProposal.add_child("ProposalVariance", children);
 

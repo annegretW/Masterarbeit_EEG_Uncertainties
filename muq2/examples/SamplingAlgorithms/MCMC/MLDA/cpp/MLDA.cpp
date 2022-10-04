@@ -17,22 +17,21 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
 
-
 namespace pt = boost::property_tree;
 using namespace muq::Modeling;
 using namespace muq::SamplingAlgorithms;
 using namespace muq::Utilities;
 
-void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
-  if(1){ // MLDA
+void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
+  if(0){ // MLDA
     pt::ptree ptProposal;
     ptProposal.put("Subsampling_0", 5); // Subsampling on level 0
     ptProposal.put("Subsampling_1", 3); // Subsampling on level 1
-    ptProposal.put("Subsampling_2", 3); // Subsampling on level 2
+    //ptProposal.put("Subsampling_2", 3); // Subsampling on level 2
 
-    ptProposal.put("Proposal_Variance_0", proposal_var[0]); // Proposal Variance on coarsest level
-    ptProposal.put("Proposal_Variance_1", proposal_var[1]);
-    ptProposal.put("Proposal_Variance_2", proposal_var[2]);
+    ptProposal.put("Proposal_Variance_0", proposal_pos_var[0]); // Proposal Variance on coarsest level
+    ptProposal.put("Proposal_Variance_1", proposal_pos_var[1]);
+    ptProposal.put("Proposal_Variance_2", proposal_mom_var[2]);
     auto proposal = std::make_shared<MLDAProposal>(ptProposal, sampling_problems.size()-1, sampling_problems);
 
     pt::ptree ptBlockID;
@@ -61,13 +60,13 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
       pt::ptree children;
       pt::ptree child1, child2, child3;
 
-      child1.put("", proposal_var[level]);
-      child2.put("", proposal_var[level]);
-      // child3.put("", proposal_var[level]);
+      child1.put("", proposal_pos_var[level]);
+      child2.put("", proposal_pos_var[level]);
+      child3.put("", proposal_mom_var[level]);
 
       children.push_back(std::make_pair("", child1));
       children.push_back(std::make_pair("", child2));
-      // children.push_back(std::make_pair("", child3));
+      children.push_back(std::make_pair("", child3));
 
       ptProposal.add_child("ProposalVariance", children);
 
@@ -95,7 +94,7 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
   }
 }
 
-void example1(int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
+void example1(int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
   int n = 3;
 
   //std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
@@ -125,11 +124,11 @@ void example1(int num_samples, int burn_in, std::vector<double> proposal_var, st
 
   Eigen::VectorXd startPt(3);
   startPt << 127, 127, 127;
-  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
+  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
 }
 
-void example2d(int num_samples, int burn_in, std::vector<double> proposal_var, std::string results_path){
-  int n = 2;
+void example2d(int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
+  int n = 3;
 
   //std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
 
@@ -150,9 +149,9 @@ void example2d(int num_samples, int burn_in, std::vector<double> proposal_var, s
     sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
   }
 
-  Eigen::VectorXd startPt(2);
-  startPt << 127, 127;
-  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_var, results_path);
+  Eigen::VectorXd startPt(3);
+  startPt << 127, 127, 1.6;
+  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
 }
 
 int main(int argc, char *argv[]){
@@ -164,24 +163,23 @@ int main(int argc, char *argv[]){
   double a = atoi(argv[4]);
   double b = atoi(argv[5]);
   double c = atoi(argv[6]);
-  double d;
-  std::vector<double> proposal_var;
 
-  if (argc == 7){
-    proposal_var = {a, b, c};
-  }
-   
-  else if (argc == 8){
-    d = atoi(argv[7]);
-    proposal_var = {a, b, c, d};
-  }
+  std::vector<double> proposal_pos_var;
+  proposal_pos_var = {a, b, c};
+
+  double d = atoi(argv[7]);
+  double e = atoi(argv[8]);
+  double f = atoi(argv[9]);
+
+  std::vector<double> proposal_mom_var;
+  proposal_mom_var = {d, e, f};
   
   std::cout << "Running MLDA with the following parameters:" << std::endl;
   std::cout << "Iterations: " << num_samples << std::endl;
   std::cout << "Burn In: " << burn_in << std::endl;
   std::cout << "Levels: " << argc-4 << std::endl;
 
-  example2d(num_samples, burn_in, proposal_var, results_path);
+  example2d(num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
   return 0;
 }
 

@@ -17,7 +17,7 @@ def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_
     # set mesh nodes as dipoles
     dipoles = []
     for p in mesh.points:
-        dipoles.append(get_dipole(p[0:2],[127,127]))
+        dipoles.append(get_radial_dipole(p[0:2],[127,127]))
 
     # generate leadfield
     leadfield_matrix = create_leadfield(mesh_path , conductivities_path, electrodes_path, dipoles)[1]
@@ -25,7 +25,19 @@ def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_
     # save leadfield
     np.savez_compressed(path_leadfield, leadfield_matrix)
 
-def get_dipole_orientation(point, center):
+
+def save_transfer_matrix(electrodes_path, conductivities_path, mesh_path, path_transfer):
+    # read mesh
+    mesh = meshio.read(mesh_path)
+
+    # generate transfer matrix
+    transfer_matrix = create_transfer_matrix(mesh_path, conductivities_path, electrodes_path)[0]
+    
+    # save transfer matrix
+    np.savez_compressed(path_transfer, transfer_matrix)
+
+
+def get_radial_dipole_orientation(point, center):
     dim = len(point)
     assert(len(center) == dim)
     if dim == 2:
@@ -50,16 +62,29 @@ def get_dipole_orientation(point, center):
 
         return moment
 
-def get_dipole(point, center):
+def get_radial_dipole(point, center):
     dim = len(point)
     assert(len(center) == dim)
-    moment = get_dipole_orientation(point, center)
+    moment = get_radial_dipole_orientation(point, center)
     if dim == 2:
         return dp.Dipole2d(point, moment)
     else:
         return dp.Dipole3d(point, moment)
 
-def get_electrodes(mesh):
+def get_dipole(point, center, rho, phi=0):
+    dim = len(point)
+    assert(len(center) == dim)
+            
+    if dim == 2:
+        moment = [np.cos(rho),np.sin(rho)]
+        print(dp.Dipole2d(point, moment))
+        return dp.Dipole2d(point, moment)
+    else:
+        moment = [np.sin(phi)*np.cos(rho),np.sin(phi)*np.sin(rho),np.cos(phi)]
+        return dp.Dipole3d(point, moment)
+
+def get_electrodes(mesh_path):
+    mesh = meshio.read(mesh_path)
     electrodes = []
     for node in mesh.points:
         if(np.isclose([math.sqrt((node[0]-127)**2+(node[1]-127)**2)],[92],atol=0.01)):
@@ -67,14 +92,12 @@ def get_electrodes(mesh):
     print(len(electrodes))
     np.savez_compressed('data/electrodes', electrodes)
 
-def calc_disturbed_sensor_values(s_ref, electrodes_path, relative_noise):
+def calc_disturbed_sensor_values(s_ref, electrodes_path, mesh_path, tensors_path, relative_noise):
     print("#################################################################")
     print("Simulate disturbed sensor values for a given dipole.")
     print("################################################################# \n")
 
     print("s_ref = %s \n" % s_ref)
-    mesh_path = "data/mesh_3.msh"
-    tensors_path = "data/conductivities.txt"
     #b_ref = analytical_solution(s_ref, mesh_path, tensors_path, electrodes_path)
 
     source_model_config = {

@@ -47,7 +47,7 @@ class EEGModelFromFile(umbridge.Model):
 
 
     def get_input_sizes(self):
-        return [2]
+        return [3]
 
     def get_output_sizes(self):
         return [1]
@@ -64,9 +64,8 @@ class EEGModelFromFile(umbridge.Model):
 
         # find next node to theta on the mesh and select the according leadfield
         points = np.array(self.mesh[i].points[:,0:2])
-        index = utility_functions.find_next_node(points,theta)
+        index = utility_functions.find_next_node(points,theta[0:2])
         #index = self.mesh[i].find_next_center_index(theta)
-        #print(index)
         b = np.array(self.leadfield_matrix[i][index])
         #b -= b[0]
         #print(b)
@@ -105,61 +104,54 @@ class EEGModelFromFile(umbridge.Model):
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
 class EEGModelTransferFromFile(umbridge.Model):
-    def __init__(self, b_ref, sigma_0, transfer_path_list, mesh_path_list, cells_per_dim, center, radii, conductivities):
+    def __init__(self, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities_path, center):
         super(EEGModelTransferFromFile, self).__init__()
-
-        # parameters
-        sigma = [10*sigma_0,5*sigma_0,sigma_0]
 
         # initialize lists
         self.mesh = []
         self.transfer_matrix = []
         self.meg_drivers = []
 
-        for i in range(len(cells_per_dim)):
-            # create mesh
-            self.mesh.append(np.load(mesh_path_list[i], allow_pickle=True))
+        for i in range(len(mesh_path_list)):
+            # read mesh
+            mesh = meshio.read(mesh_path_list[i])
+            self.mesh.append(mesh)
+            print(mesh.points)
             #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
             self.transfer_matrix.append(np.load(transfer_path_list[i])['arr_0'])
 
-            meg_config = {
+            config = {
                 'type' : 'fitted',
                 'solver_type' : 'cg',
-                'element_type' : 'hexahedron',
-                'volume_conductor' : {
-                    'grid' : {
-                        'elements' : self.mesh[i]['elements'].tolist(),
-                        'nodes' : self.mesh[i]['nodes'].tolist()
-                    },
-                    'tensors' : {
-                        'labels' : self.mesh[i]['labels'].tolist(),
-                        'conductivities' : conductivities
-                    }
+                'element_type' : 'tetrahedron',
+                'volume_conductor': {
+                    'grid.filename' : mesh_path_list[i], 
+                    'tensors.filename' : conductivities_path
                 },
                 'post_process' : 'true', 
                 'subtract_mean' : 'true'
             }
-            meg_driver = dp.MEEGDriver3d(meg_config)
+            meg_driver = dp.MEEGDriver2d(config)
             self.meg_drivers.append(meg_driver)
 
         # reference values of measurement values
         self.b_ref = b_ref
+        self.m = len(b_ref[0])
         
         # posterior variance
         self.sigma = sigma
+
         self.center = center
-        self.radii = radii
-        self.cells_per_dim = cells_per_dim
         
         source_model_config = {
-        'type' : 'venant',
-        'numberOfMoments' : 3,
-        'referenceLength' : 20,
-        'weightingExponent' : 1,
-        'relaxationFactor' : 1e-6,
-        'mixedMoments' : True,
-        'restrict' : True,
-        'initialization' : 'closest_vertex'
+            'type' : 'venant',
+            'numberOfMoments' : 3,
+            'referenceLength' : 20,
+            'weightingExponent' : 1,
+            'relaxationFactor' : 1e-6,
+            'mixedMoments' : True,
+            'restrict' : True,
+            'initialization' : 'closest_vertex'
         }
 
         self.config = {
@@ -180,23 +172,18 @@ class EEGModelTransferFromFile(umbridge.Model):
     def posterior(self, theta, level):
         i = level-1
 
-        next_dipole_pos = msh.find_next_center(self.center, self.radii, self.cells_per_dim[i], theta) 
-        #next_dipole_pos = theta
-        dist = np.sqrt(sum([(x-c)**2 for x,c in zip(next_dipole_pos, self.center)]))
+        if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
+            return -1e20
 
-        if dist > np.max(self.radii):
-            return 0
-
-        next_dipole = utility_functions.get_dipole(next_dipole_pos)
+        next_dipole = utility_functions.get_dipole(theta[0:2], self.center, theta[2])
         b = self.meg_drivers[i].applyEEGTransfer(self.transfer_matrix[i],[next_dipole],self.config)[0]
 
         # calculate the posterior as a normal distribution
-        posterior = -(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))**2
-
-        #print([next_dipole_pos[0],next_dipole_pos[1],next_dipole_pos[2]])
-        #return [[posterior],[next_dipole_pos[0],next_dipole_pos[1],next_dipole_pos[2]]]
-        #print(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))
-        return posterior
+        posterior = ((1/(2*self.sigma[i]**2))**(self.m/2))*np.exp(-(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[i]), 2))**2)
+        if posterior==0:
+           return -1e20
+        
+        return np.log(posterior)
         
     def __call__(self, parameters, config={'level': 1}):
         return [[self.posterior(parameters[0],config["level"])]]
