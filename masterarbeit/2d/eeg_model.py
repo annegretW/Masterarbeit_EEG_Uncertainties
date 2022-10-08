@@ -47,7 +47,7 @@ class EEGModelFromFile(umbridge.Model):
 
 
     def get_input_sizes(self):
-        return [3]
+        return [2]
 
     def get_output_sizes(self):
         return [1]
@@ -104,8 +104,11 @@ class EEGModelFromFile(umbridge.Model):
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
 class EEGModelTransferFromFile(umbridge.Model):
-    def __init__(self, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities_path, center):
+    def __init__(self, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities_path, center, mode='Radial dipole'):
         super(EEGModelTransferFromFile, self).__init__()
+
+        assert(mode in ['Radial dipole','Arbitrary dipole orientation'])
+        self.mode = mode
 
         # initialize lists
         self.mesh = []
@@ -116,7 +119,6 @@ class EEGModelTransferFromFile(umbridge.Model):
             # read mesh
             mesh = meshio.read(mesh_path_list[i])
             self.mesh.append(mesh)
-            print(mesh.points)
             #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
             self.transfer_matrix.append(np.load(transfer_path_list[i])['arr_0'])
 
@@ -142,7 +144,8 @@ class EEGModelTransferFromFile(umbridge.Model):
         self.sigma = sigma
 
         self.center = center
-        
+        self.dim = len(center)
+
         source_model_config = {
             'type' : 'venant',
             'numberOfMoments' : 3,
@@ -161,9 +164,11 @@ class EEGModelTransferFromFile(umbridge.Model):
             'subtract_mean' : True
         }
 
-
     def get_input_sizes(self):
-        return [3]
+        if self.mode=='Radial dipole':
+            return [self.dim]
+        else:
+            return [self.dim+1]
 
     def get_output_sizes(self):
         return [1]
@@ -175,7 +180,14 @@ class EEGModelTransferFromFile(umbridge.Model):
         if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
             return -1e20
 
-        next_dipole = utility_functions.get_dipole(theta[0:2], self.center, theta[2])
+        if self.mode=='Radial dipole':
+            next_dipole = utility_functions.get_radial_dipole(theta[0:self.dim], self.center)
+
+        else:
+            next_dipole = utility_functions.get_dipole(theta[0:self.dim], self.center, theta[self.dim])
+
+        #next_dipole = utility_functions.get_radial_dipole(theta, self.center)
+
         b = self.meg_drivers[i].applyEEGTransfer(self.transfer_matrix[i],[next_dipole],self.config)[0]
 
         # calculate the posterior as a normal distribution

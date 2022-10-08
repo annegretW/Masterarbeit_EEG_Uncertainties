@@ -46,7 +46,6 @@ def get_radial_dipole_orientation(point, center):
             return [1,0]
         
         rho = math.atan2(point[1]-center[1], point[0]-center[0])
-    
         moment = [np.cos(rho),np.sin(rho)]
 
         return moment
@@ -71,16 +70,21 @@ def get_radial_dipole(point, center):
     else:
         return dp.Dipole3d(point, moment)
 
+def get_dipole_orientation(dim, rho, phi=0):
+    if dim == 2:
+        return [np.cos(rho),np.sin(rho)]
+    else:
+        return [np.sin(phi)*np.cos(rho),np.sin(phi)*np.sin(rho),np.cos(phi)]
+
 def get_dipole(point, center, rho, phi=0):
     dim = len(point)
     assert(len(center) == dim)
-            
+
+    moment = get_dipole_orientation(dim, rho, phi)
+
     if dim == 2:
-        moment = [np.cos(rho),np.sin(rho)]
-        print(dp.Dipole2d(point, moment))
         return dp.Dipole2d(point, moment)
     else:
-        moment = [np.sin(phi)*np.cos(rho),np.sin(phi)*np.sin(rho),np.cos(phi)]
         return dp.Dipole3d(point, moment)
 
 def get_electrodes(mesh_path):

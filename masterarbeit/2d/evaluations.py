@@ -25,7 +25,7 @@ def binning(centers,samples):
         samples = np.transpose(samples)
         for s in samples:
                 bins[utility_functions.find_next_node(centers,s)] += 1
-        return bins
+        return bins/len(samples)
 
 def draw_model(mesh_path, conductivities_path, point, center, ax):
         mesh = meshio.read(mesh_path)
@@ -60,13 +60,17 @@ def draw_densities(samples, axis):
             textsize=18, ax=axis)
         return im
 
-def set_ax(axis, point):
+def set_ax(axis, color='None'):
         for r in [78,86,92]:
                 axis.add_artist(
-                        pt.Circle((127,127),r,edgecolor="white",facecolor="none"))
-        axis.add_artist(
-                pt.Circle(point,3,facecolor="red"))
+                        pt.Circle((127,127),r,edgecolor="white",facecolor=color))
         axis.set_xlabel('Samples X')
         axis.set_ylabel('Samples Y')
+        axis.set_xlim(35, 219)
+        axis.set_ylim(35,219)
         axis.set_aspect(1)
+
+def draw_point(axis, point, alpha=1):
+        axis.add_artist(
+                pt.Circle(point,3,facecolor="red",alpha=alpha))
 
