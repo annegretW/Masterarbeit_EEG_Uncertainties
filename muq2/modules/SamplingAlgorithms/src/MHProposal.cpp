@@ -23,13 +23,17 @@ MHProposal::MHProposal(pt::ptree const& pt,
   // compute the (diagonal) covariance for the proposal
   //const Eigen::VectorXd cov = pt.get("ProposalVariance", 1.0)*
   //                            Eigen::VectorXd::Ones(problemDim);
-  Eigen::VectorXd cov(problemDim);
 
+  Eigen::VectorXd cov(problemDim);
   int i = 0;
   BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("ProposalVariance.")) {
-          cov(i) = stod(v.second.data());
-          i++;
+          if(i<problemDim){
+            cov(i) = stod(v.second.data());
+            //std::cout << cov(i) << std::endl;
+            i++;
+          }
   }
+
 
   //const Eigen::VectorXd cov = pt.get("ProposalVariance", 1.0)*
   //                            Eigen::VectorXd::Ones(problemDim);

@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 
 from os.path import exists
@@ -35,8 +36,8 @@ radii = [92,86,78]
 conductivities = [0.00043,0.00001,0.00179]
 
 # Set mode ('Radial dipole','Arbitrary dipole orientation')
-#mode = 'Arbitrary dipole orientation'
-mode = 'Radial dipole'
+mode = 'Arbitrary dipole orientation'
+#mode = 'Radial dipole'
 
 # Set dipole
 position = [80, 150]
@@ -48,10 +49,10 @@ else:
     s_ref = utility_functions.get_dipole(position,center,rho)
 
 # Set noise
-relative_noise = 0.001
+relative_noise = 0.01
 
 # Set variance factor for each level
-var_factor = [1, 1, 1]
+var_factor = [8, 2, 1]
 
 # model (L - Use leadfield, T - Use transfer matrix)
 model = 'T'
@@ -87,7 +88,12 @@ elif model == 'T':
 b_ref = np.zeros((l,m))
 sigma = np.zeros(l)
 
-b_ref[0], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes, path_meshs[-1], path_conductivities, relative_noise)
+if relative_noise==0:
+    b_ref[0] = utility_functions.calc_sensor_values(s_ref, path_electrodes, path_meshs[-1], path_conductivities)
+    sigma_0 = 0.001*np.amax(np.absolute(b_ref[0]))
+else:
+    b_ref[0], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes, path_meshs[-1], path_conductivities, relative_noise)
+
 sigma[0] = var_factor[0]*sigma_0
 
 for i in range(1,l):

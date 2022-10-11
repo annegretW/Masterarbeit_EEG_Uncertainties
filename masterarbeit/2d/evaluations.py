@@ -1,3 +1,4 @@
+import colorsys
 from re import I
 import numpy as np
 import utility_functions
@@ -48,16 +49,29 @@ def draw_model(mesh_path, conductivities_path, point, center, ax):
 
 
 
-def draw_cells(mesh_path, samples, ax):
+def draw_cells(mesh_path, samples, ax, vmin=None, vmax=None):
         mesh = meshio.read(mesh_path)
         centers = get_midpoints(mesh)
-        im = ax.tripcolor(mesh.points[:,0], mesh.points[:,1], triangles=mesh.cells_dict['triangle'], facecolors=binning(centers,samples))
-        return im 
+        colors = binning(centers,samples)
 
-def draw_densities(samples, axis):
+        if vmin==None:
+                vmin = np.amin(colors)
+        if vmax==None:
+                vmax = np.amax(colors)
+        
+        im = ax.tripcolor(mesh.points[:,0], mesh.points[:,1], triangles=mesh.cells_dict['triangle'], facecolors=colors, vmin=vmin, vmax=vmax)
+        return im, vmin, vmax
+
+def draw_densities(samples, axis, vmin=None, vmax=None):
+        contourf = {}
+        if vmin!=None:
+                contourf['vmin'] = vmin
+        if vmax!=None:
+                contourf['vmax'] = vmax
+
         im = az.plot_dist(np.concatenate([samples[0,:],np.array([35.,219.])]),
             np.concatenate([samples[1,:],np.array([35.,219.])]),
-            textsize=18, ax=axis)
+            textsize=18, ax=axis, contourf_kwargs={'vmin': vmin, 'vmax': vmax})
         return im
 
 def set_ax(axis, color='None'):
