@@ -15,6 +15,8 @@
 #include "MUQ/Utilities/RandomGenerator.h"
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include <boost/foreach.hpp>
 
 namespace pt = boost::property_tree;
@@ -22,12 +24,43 @@ using namespace muq::Modeling;
 using namespace muq::SamplingAlgorithms;
 using namespace muq::Utilities;
 
-void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
+void evaluate_samples(std::shared_ptr<SampleCollection> samps){
+  Eigen::VectorXd sampMean = samps->Mean();
+  std::cout << "\nSample Mean = \n" << sampMean.transpose() << std::endl;
+
+  Eigen::VectorXd sampVar = samps->Variance();
+  std::cout << "\nSample Variance = \n" << sampVar.transpose() << std::endl;
+
+  Eigen::MatrixXd sampCov = samps->Covariance();
+  std::cout << "\nSample Covariance = \n" << sampCov << std::endl;
+
+  Eigen::VectorXd sampMom3 = samps->CentralMoment(3);
+  std::cout << "\nSample Third Moment = \n" << sampMom3 << std::endl << std::endl;
+
+  Eigen::VectorXd batchESS = samps->ESS("Batch");
+  Eigen::VectorXd batchMCSE = samps->StandardError("Batch");
+  Eigen::VectorXd batchAutocorrelation = (batchESS/(*samps).size()).cwiseInverse();
+
+  Eigen::VectorXd spectralESS = samps->ESS("Wolff");
+  Eigen::VectorXd spectralMCSE = samps->StandardError("Wolff");
+  Eigen::VectorXd spectralAutocorrelation = (spectralESS/(*samps).size()).cwiseInverse();
+
+  std::cout << "ESS:\n";
+  std::cout << "  Batch:    " << batchESS.transpose() << std::endl;
+  std::cout << "  Spectral: " << spectralESS.transpose() << std::endl;
+  std::cout << "Autocorrelation:\n";
+  std::cout << "  Batch:    " << batchAutocorrelation.transpose() << std::endl;
+  std::cout << "  Spectral: " << spectralAutocorrelation.transpose() << std::endl;
+  std::cout << "MCSE:\n";
+  std::cout << "  Batch:    " << batchMCSE.transpose() << std::endl;
+  std::cout << "  Spectral: " << spectralMCSE.transpose() << std::endl;
+}
+
+void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::vector<int> subsampling, std::string results_path){
   // MLDA
     pt::ptree ptProposal;
-    ptProposal.put("Subsampling_0", 5); // Subsampling on level 0
-    ptProposal.put("Subsampling_1", 3); // Subsampling on level 1
-    ptProposal.put("Subsampling_2", 1); // Subsampling on level 2
+    ptProposal.put("Subsampling_0", subsampling[0]); // Subsampling on level 0
+    ptProposal.put("Subsampling_1", subsampling[1]); // Subsampling on level 1
 
     ptProposal.put("Proposal_Variance_Pos_0", proposal_pos_var[0]); // Proposal Variance on coarsest level
     ptProposal.put("Proposal_Variance_Pos_1", proposal_pos_var[1]);
@@ -55,109 +88,56 @@ void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
     samps->WriteToFile(results_path + "_mlda.h5");
+
+    evaluate_samples(samps);
 }
 
-void MH(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
-    for (int level = 0; level < sampling_problems.size(); level++) {
-      auto problem = sampling_problems[level];
+void MH(std::shared_ptr<SamplingProblem> sampling_problem, boost::property_tree::ptree config){
+    auto problem = sampling_problem;
+    pt::ptree ptProposal = config.get_child("Level1.ProposalVariance");
+    auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
 
-      pt::ptree ptProposal;      
-      pt::ptree children;
-      pt::ptree child1, child2, child3;
+    pt::ptree ptBlockID;
+    ptBlockID.put("BlockIndex",0);
+    std::vector<std::shared_ptr<TransitionKernel>> kernel(1);
+    kernel[0] = std::make_shared<MHKernel>(ptBlockID,problem,proposal);
 
-      child1.put("", proposal_pos_var[level]);
-      child2.put("", proposal_pos_var[level]);
-      child3.put("", proposal_mom_var[level]);
+    pt::ptree pt;
+    pt.put("NumSamples", config.get<int>("Sampling.NumSamples")); // number of MCMC steps
+    pt.put("BurnIn", config.get<int>("Sampling.BurnIn"));
+    pt.put("PrintLevel",3);
+    auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
-      children.push_back(std::make_pair("", child1));
-      children.push_back(std::make_pair("", child2));
-      children.push_back(std::make_pair("", child3));
+    Eigen::VectorXd startPt(2);
+    startPt << 127, 127;
 
-      ptProposal.add_child("ProposalVariance", children);
+    std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-      //ptProposal.put<double>("ProposalVariance", proposal_pos_var[level]); 
-
-      auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
-
-      int x = problem->blockSizes(0);
-      std::cout << x << std::endl;
-
-      pt::ptree ptBlockID;
-      ptBlockID.put("BlockIndex",0);
-      std::vector<std::shared_ptr<TransitionKernel>> kernel(1);
-      kernel[0] = std::make_shared<MHKernel>(ptBlockID,problem,proposal);
-      pt::ptree pt;
-      pt.put("NumSamples", num_samples); // number of MCMC steps
-      pt.put("BurnIn", burn_in);
-      pt.put("PrintLevel",3);
-      auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
-
-      std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
-
-      samps->WriteToFile(results_path + "_l" + std::to_string(level) + ".h5");
-    }
+    samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + ".h5");
+    evaluate_samples(samps);
 }
 
-void example1(int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
-  int n = 3;
-
-  //std::string results_path = "/home/anne/Masterarbeit/masterarbeit/results/samples2";
-
+void example2d(std::string method, boost::property_tree::ptree config, int dim, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::vector<int> subsampling, std::string results_path){
   std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
-  {
-    json config;
-    config["level"] = 1;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-  {
-    json config;
-    config["level"] = 2;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-  {
-    json config;
-    config["level"] = 3;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-  {
-    json config;
-    config["level"] = 4;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
 
-
-  Eigen::VectorXd startPt(3);
-  startPt << 127, 127, 127;
-  MLDA(sampling_problems, n, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
-}
-
-void example2d(std::string mode, int dim, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::string results_path){
-  std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
-  {
-    json config;
-    config["level"] = 1;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
+  if(method=="MCMC"){
+    json um_config;
+    um_config["level"] = 1;
+    std::shared_ptr<SamplingProblem> sampling_problem = std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config));
+    MH(sampling_problem, config);
   }
-  {
-    json config;
-    config["level"] = 2;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
+  else if(method=="MLDA"){
+    MLDA(sampling_problems, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, subsampling, results_path);
   }
-  {
-    json config;
-    config["level"] = 3;
-    sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", config)));
-  }
-
-  if(mode=="MH"){
-    MH(sampling_problems, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
-  }
-  else if(mode=="MLDA"){
-    MLDA(sampling_problems, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
+  else{
+    std::cout << "Method " +  method + " is not implemented." << std::endl;
   }
 }
 
 int main(int argc, char *argv[]){
+  boost::property_tree::ptree config;
+  boost::property_tree::json_parser::read_json("/home/anne/Masterarbeit/masterarbeit/2d/config.json", config);
+
   int dim = atoi(argv[1]);
 
   int num_samples = atoi(argv[2]);
@@ -187,14 +167,15 @@ int main(int argc, char *argv[]){
     startPt << atoi(argv[11]), atoi(argv[12]), atoi(argv[13]);
   }
 
-  std::string mode = atof(argv[14]);
-  
-  std::cout << "Running MLDA with the following parameters:" << std::endl;
-  std::cout << "Iterations: " << num_samples << std::endl;
-  std::cout << "Burn In: " << burn_in << std::endl;
-  std::cout << "Levels: " << argc-4 << std::endl;
+  std::string method = config.get<std::string>("Setup.Method");
+  std::cout << method << std::endl;
 
-  example2d(mode, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, results_path);
+  int g = atoi(argv[15]);
+  int h = atoi(argv[16]);
+  std::vector<int> subsampling;
+  subsampling = {g, h};
+
+  example2d(method, config, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, subsampling, results_path);
   return 0;
 }
 

@@ -26,18 +26,14 @@ MHProposal::MHProposal(pt::ptree const& pt,
 
   Eigen::VectorXd cov(problemDim);
   int i = 0;
-  BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("ProposalVariance.")) {
+  BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("")) {
           if(i<problemDim){
+            std::cout << v.second.data() << std::endl;
             cov(i) = stod(v.second.data());
-            //std::cout << cov(i) << std::endl;
             i++;
           }
   }
 
-
-  //const Eigen::VectorXd cov = pt.get("ProposalVariance", 1.0)*
-  //                            Eigen::VectorXd::Ones(problemDim);
-      
   // created a Gaussian with scaled identity covariance
   proposal = std::make_shared<Gaussian>(Eigen::VectorXd::Zero(problemDim), cov);
 }
