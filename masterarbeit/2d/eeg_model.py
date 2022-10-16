@@ -1,14 +1,11 @@
 #!/usr/bin/python3
-
 import sys
 import umbridge
 import numpy as np
-from scipy import stats
 import utility_functions
 import meshio
 import math
-from os.path import exists
-from umbridge import serve_model
+import json
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
@@ -26,24 +23,25 @@ import duneuropy as dp
 #   b_ref               - reference values of sources                                           #
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
-class EEGModelFromFile(umbridge.Model):
-    def __init__(self, b_ref, sigma, leadfield_path_list, mesh_path_list):
-        super(EEGModelFromFile, self).__init__()
+class EEGModelLeadfield(umbridge.Model):
+    def __init__(self, levels, b_ref, sigma, leadfield_path_list, mesh_path_list):
+        super(EEGModelLeadfield, self).__init__()
 
         # initialize lists
-        self.mesh = []
-        self.leadfield_matrix = []
+        self.mesh = {}
+        self.leadfield_matrix = {}
+        self.m = {}
 
-        for i in range(len(mesh_path_list)):
+        for l in levels:
             # read mesh
-            mesh = meshio.read(mesh_path_list[i])
-            self.mesh.append(mesh)
+            mesh = meshio.read(mesh_path_list[l])
+            self.mesh[l] = mesh
             #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
-            self.leadfield_matrix.append(np.load(leadfield_path_list[i])['arr_0'])
+            self.leadfield_matrix[l] = np.load(leadfield_path_list[l])['arr_0']
+            self.m = len(b_ref[l])
 
         # reference values of measurement values
         self.b_ref = b_ref
-        self.m = len(b_ref[0])
 
         # posterior variance
         self.sigma = sigma
@@ -57,33 +55,15 @@ class EEGModelFromFile(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, level):
-        #print(level)
-        #print(theta)
-        i = level-1
-
         if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
-            #print(theta)
             return -1e20
 
         # find next node to theta on the mesh and select the according leadfield
-        points = np.array(self.mesh[i].points[:,0:2])
+        points = np.array(self.mesh[level].points[:,0:2])
         index = utility_functions.find_next_node(points,theta[0:2])
-        #index = self.mesh[i].find_next_center_index(theta)
         b = np.array(self.leadfield_matrix[i][index])
-        #b -= b[0]
-        #print(b)
-        #node = self.mesh[i].nodes[i]
 
-        # calculate the posterior as a normal distribution
-        #error = utility_functions.relative_error(self.b_ref, b)
-        #error = np.amax(np.absolute(np.array(self.b_ref)-np.array(b)))
-        #posterior = -(1/(2*self.sigma[i]**2))*error**2
-        #posterior = stats.multivariate_normal.pdf(b,mean=self.b_ref[i],cov=self.sigma[i]*np.identity(self.m))
-        #print(posterior)
-        #if posterior!=0:
-        #    posterior = np.log(posterior)
-        #print(posterior)
-        posterior = ((1/(2*self.sigma[i]**2))**(self.m/2))*np.exp(-(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[i]), 2))**2)
+        posterior = ((1/(2*self.sigma[level]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level]**2))*(np.linalg.norm(np.array(self.b_ref[level])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level]), 2))**2)
         if posterior==0:
            return -1e20
         
@@ -106,42 +86,44 @@ class EEGModelFromFile(umbridge.Model):
 #   b_ref               - reference values of sources                                           #
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
-class EEGModelTransferFromFile(umbridge.Model):
-    def __init__(self, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities_path, center, mode='Radial dipole'):
-        super(EEGModelTransferFromFile, self).__init__()
+class EEGModelTransfer(umbridge.Model):
+    def __init__(self, levels, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities_path, center, mode='Radial dipole'):
+        super(EEGModelTransfer, self).__init__()
 
-        assert(mode in ['Radial dipole','Arbitrary dipole orientation'])
+        assert(mode in ['Radial','Arbitrary'])
         self.mode = mode
 
         # initialize lists
-        self.mesh = []
-        self.transfer_matrix = []
-        self.meg_drivers = []
+        self.mesh = {}
+        self.transfer_matrix = {}
+        self.meg_drivers = {}
+        self.m = {}
 
-        for i in range(len(mesh_path_list)):
+        for l in levels:
             # read mesh
-            mesh = meshio.read(mesh_path_list[i])
-            self.mesh.append(mesh)
+            mesh = meshio.read(mesh_path_list[l])
+            self.mesh[l] = mesh
             #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
-            self.transfer_matrix.append(np.load(transfer_path_list[i])['arr_0'])
+            self.transfer_matrix[l] = np.load(transfer_path_list[l])['arr_0']
 
             config = {
                 'type' : 'fitted',
                 'solver_type' : 'cg',
                 'element_type' : 'tetrahedron',
                 'volume_conductor': {
-                    'grid.filename' : mesh_path_list[i], 
+                    'grid.filename' : mesh_path_list[l], 
                     'tensors.filename' : conductivities_path
                 },
                 'post_process' : 'true', 
                 'subtract_mean' : 'true'
             }
             meg_driver = dp.MEEGDriver2d(config)
-            self.meg_drivers.append(meg_driver)
+            self.meg_drivers[l] = meg_driver
+
+            self.m[l] = len(b_ref[l])
 
         # reference values of measurement values
         self.b_ref = b_ref
-        self.m = len(b_ref[0])
         
         # posterior variance
         self.sigma = sigma
@@ -168,7 +150,7 @@ class EEGModelTransferFromFile(umbridge.Model):
         }
 
     def get_input_sizes(self):
-        if self.mode=='Radial dipole':
+        if self.mode=='Radial':
             return [self.dim]
         else:
             return [self.dim+1]
@@ -178,12 +160,10 @@ class EEGModelTransferFromFile(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, level):
-        i = level-1
-
         if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
             return -1e20
 
-        if self.mode=='Radial dipole':
+        if self.mode=='Radial':
             next_dipole = utility_functions.get_radial_dipole(theta[0:self.dim], self.center)
 
         else:
@@ -191,122 +171,91 @@ class EEGModelTransferFromFile(umbridge.Model):
 
         #next_dipole = utility_functions.get_radial_dipole(theta, self.center)
 
-        b = self.meg_drivers[i].applyEEGTransfer(self.transfer_matrix[i],[next_dipole],self.config)[0]
+        b = self.meg_drivers[level].applyEEGTransfer(self.transfer_matrix[level],[next_dipole],self.config)[0]
 
         # calculate the posterior as a normal distribution
-        posterior = ((1/(2*self.sigma[i]**2))**(self.m/2))*np.exp(-(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[i]), 2))**2)
+        posterior = ((1/(2*self.sigma[level]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level]**2))*(np.linalg.norm(np.array(self.b_ref[level])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level]), 2))**2)
         #posterior = ((1/(2*self.sigma[i]**2))**(self.m/2))*np.exp(-(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))**2)
 
         if posterior==0:
            return -1e20
-        
+
         return np.log(posterior)
         
-    def __call__(self, parameters, config={'level': 1}):
+    def __call__(self, parameters, config):
         return [[self.posterior(parameters[0],config["level"])]]
 
     def supports_evaluate(self):
         return True
 
 if __name__ == "__main__":
+    # Get path to config file
     parameters_path = sys.argv[1]
-    sys.path.append(parameters_path)
-    import parameters as parameters
+    
+    # Read config file
+    file = open(parameters_path)
+    config = json.load(file)
+    file.close()
 
-    # Set paths
-    path_electrodes = "data/electrodes.npz"
-
-    path_conductivities = 'data/conductivities.txt'
-
-    path_leadfield_matrices = [
-            "data/leadfield_matrix_1.npz",
-            "data/leadfield_matrix_2.npz",
-            "data/leadfield_matrix_3.npz"]
-
-    path_transfer_matrices = [
-            "data/transfer_matrix_1.npz",
-            "data/transfer_matrix_2.npz",
-            "data/transfer_matrix_3.npz"]
-
-    path_meshs = parameters.path_meshs
-
-    l = len(path_leadfield_matrices)
-    assert l == len(path_meshs)
-
-    # Set parameters
-    center = parameters.center
-    radii = parameters.radii
-    conductivities = parameters.conductivities
-
-    # Set mode ('Radial dipole','Arbitrary dipole orientation')
-    mode = parameters.mode
-
-    # Set dipole
-    position = parameters.position
-    rho = parameters.rho
-
-    if mode == 'Radial dipole':
-        s_ref = utility_functions.get_radial_dipole(position,center)
-    else:
-        s_ref = utility_functions.get_dipole(position,center,rho)
+    # Set model (L - Use leadfield, T - Use transfer matrix)
+    model = config["Setup"]["Matrix"]
 
     # Set noise
-    relative_noise = parameters.relative_noise
+    relative_noise = config["ModelConfig"]["RelativeNoise"]
 
-    # Set variance factor for each level
-    var_factor = parameters.var_factor
+    # Set parameters
+    center = (config["Geometry"]["Center"]["x"], config["Geometry"]["Center"]["y"])
+    radii = config["Geometry"]["Conductivities"]
+    path_conductivities = config["Geometry"]["Conductivities"]
 
-    # model (L - Use leadfield, T - Use transfer matrix)
-    model = parameters.model
+    # Set type
+    dipole_type = config["ModelConfig"]["Dipole"]["Type"]
 
-    # Generate electrode positions if not already existing
-    if not exists(path_electrodes):
-        utility_functions.get_electrodes(path_meshs[0])
+    # Set dipole
+    position = (config["ModelConfig"]["Dipole"]["Position"]["x"],config["ModelConfig"]["Dipole"]["Position"]["y"])
 
-    m = len(np.load(path_electrodes)["arr_0"])
-    print("Number of electrodes: " + str(m))
-
-    # Create leadfield matrices if not already existing
-    if model=='L':
-        for i in range(l):
-            if not exists(path_leadfield_matrices[i]):
-                utility_functions.save_leadfield_matrix(
-                    path_electrodes, 
-                    path_conductivities, 
-                    path_meshs[i], 
-                    path_leadfield_matrices[i])
-
-    # Create transfer matrices if not already existing
-    elif model == 'T':
-        for i in range(l):
-            if not exists(path_transfer_matrices[i]):
-                utility_functions.save_transfer_matrix(
-                    path_electrodes, 
-                    path_conductivities, 
-                    path_meshs[i], 
-                    path_transfer_matrices[i])
-
-    # Generate reference values
-    b_ref = np.zeros((l,m))
-    sigma = np.zeros(l)
-
-    if relative_noise==0:
-        b_ref[0] = utility_functions.calc_sensor_values(s_ref, path_electrodes, path_meshs[-1], path_conductivities)
-        sigma_0 = 0.001*np.amax(np.absolute(b_ref[0]))
+    if dipole_type == 'Radial':
+        s_ref = utility_functions.get_radial_dipole(position,center)
     else:
-        b_ref[0], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes, path_meshs[-1], path_conductivities, relative_noise)
+        rho = config["Dipole"]["Orientation"]
+        s_ref = utility_functions.get_dipole(position,center,rho)
+    
+    # Set paths
+    path_electrodes = {}
+    
+    path_meshs = {}
+    path_matrices = {}
+    var_factor = {}
+    b_ref = {} 
+    sigma = {}
 
-    sigma[0] = var_factor[0]*sigma_0
+    levels = config["Sampling"]["Levels"]
+    for level in levels:
+        level_config = config[level]
+        path_electrodes[level] = level_config["Electrodes"]
+        path_meshs[level] = level_config["Mesh"]
+        var_factor[level] = level_config["VarFactor"]
+        if model=='T':
+            path_matrices[level] = level_config["TransferMatrix"]
+        elif model=='L':
+            path_matrices[level] = level_config["LeadfieldMatrix"]
 
-    for i in range(1,l):
-        b_ref[i] = b_ref[0]
-        sigma[i] = var_factor[i]*sigma_0 
+        m = len(np.load(path_electrodes[level])["arr_0"])
+        b_ref[level] = np.zeros(m)
+
+        if relative_noise==0:
+            b_ref[level] = utility_functions.calc_sensor_values(s_ref, path_electrodes[level], path_meshs[level], path_conductivities)
+            sigma_0 = 0.001*np.amax(np.absolute(b_ref[level]))
+        else:
+            b_ref[level], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes[level], path_meshs[level], path_conductivities, relative_noise)
+
+        sigma[level] = var_factor[level]*sigma_0
 
     # Create EEG modell
     if model=='T':
-        testmodel = EEGModelTransferFromFile(b_ref, sigma, path_transfer_matrices, path_meshs, path_conductivities, center, mode)
+        testmodel = EEGModelTransfer(levels, b_ref, sigma, path_matrices, path_meshs, path_conductivities, center, dipole_type)
     elif model == 'L':
-        testmodel = EEGModelFromFile(b_ref, sigma, path_leadfield_matrices, path_meshs)
+        testmodel = EEGModelLeadfield(levels, b_ref, sigma, path_matrices, path_meshs)
 
     # send via localhost
-    serve_model(testmodel, 4243)
+    umbridge.serve_model(testmodel, 4243)

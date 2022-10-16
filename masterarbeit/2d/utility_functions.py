@@ -2,6 +2,7 @@ import numpy as np
 from leadfield import create_leadfield, create_transfer_matrix
 import math
 import meshio
+from os.path import exists
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
@@ -87,14 +88,14 @@ def get_dipole(point, center, rho, phi=0):
     else:
         return dp.Dipole3d(point, moment)
 
-def get_electrodes(mesh_path):
+def get_electrodes(electrodes_path, mesh_path):
     mesh = meshio.read(mesh_path)
     electrodes = []
     for node in mesh.points:
         if(np.isclose([math.sqrt((node[0]-127)**2+(node[1]-127)**2)],[92],atol=0.01)):
             electrodes.append(node)
     print(len(electrodes))
-    np.savez_compressed('data/electrodes', electrodes)
+    np.savez_compressed(electrodes_path, electrodes)
 
 def calc_sensor_values(s_ref, electrodes_path, mesh_path, tensors_path):
     print("s_ref = %s \n" % s_ref)
@@ -142,3 +143,33 @@ def find_next_node(nodes, point):
     index = np.linalg.norm(np.absolute(nodes - point), 2, axis=1).argmin()
     #index = np.linalg.norm(np.abs(nodes - point),axis=1).argmin()
     return index
+
+def create_data(model, matrix_paths, mesh_paths, electrodes_path, conductivities):
+    # Generate electrode positions if not already existing
+    l = len(electrodes_path)
+    assert l == len(mesh_paths)
+    for i in range(l):
+        if not exists(electrodes_path[i]):
+            get_electrodes(electrodes_path[i],mesh_paths[i])
+
+    # Create leadfield matrices if not already existing
+    if model=='L':
+        assert l == len(matrix_paths)
+        for i in range(l):
+            if not exists(matrix_paths[i]):
+                save_leadfield_matrix(
+                    electrodes_path[i], 
+                    conductivities, 
+                    mesh_paths[i], 
+                    matrix_paths[i])
+
+    # Create transfer matrices if not already existing
+    elif model == 'T':
+        assert l == len(matrix_paths)
+        for i in range(l):
+            if not exists(matrix_paths[i]):
+                save_transfer_matrix(
+                    electrodes_path[i], 
+                    conductivities, 
+                    mesh_paths[i], 
+                    matrix_paths[i])

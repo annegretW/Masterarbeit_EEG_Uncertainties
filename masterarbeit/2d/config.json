@@ -1,21 +1,61 @@
 {
-    "Setup": {
+    "Setup" : {
         "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
         "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/",
-        "Method" : "MCMC"
+        "Method" : "MCMC",
+        "Matrix" : "T"
     },
-    "BasicConfig": {
+    "ModelConfig" : {
+        "Dipole" : {
+            "Type" : "Radial",
+            "Position" : {
+                "x" : 80,
+                "y" : 150
+            }
+        }, 
+        "RelativeNoise" : 0.01 
+    },
+    "Geometry" : {
         "Dim" : 2,
-        "Conductivities" : [0.00043, 0.00001, 0.00179]
+        "Conductivities" : "/home/anne/Masterarbeit/masterarbeit/2d/data/conductivities.txt",
+        "Center" : {
+            "x" : 127,
+            "y" : 127
+        },
+        "Radii" : [92,86,78]
     },
     "Sampling" : {
         "NumSamples" : 2000,
         "BurnIn" : 200,
-        "StartPoint" : [127, 127],
-        "Levels" : ["level1"]
+        "StartPoint" : {
+            "x" : 127,
+            "y" : 127
+        },
+        "Levels" : ["Level1", "Level2", "Level3"]
     },
     "Level1" : {
-        "ProposalVariance" : [4, 4]
+        "ProposalVariance" : [4, 4],
+        "VarFactor" : 1,
+        "ResultFile" : "samples_level_1",
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_20_1.msh",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/Example_1_2/data/electrodes.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/Example_1_2/data/transfer_matrix_1.npz"
+    },
+    "Level2" : {
+        "ProposalVariance" : [4, 4],
+        "VarFactor" : 1,
+        "ResultFile" : "samples_level_2",
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_20_2.msh",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/Example_1_2/data/electrodes.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/Example_1_2/data/transfer_matrix_2.npz"
+    },
+    "Level3" : {
+        "ProposalVariance" : [4, 4],
+        "VarFactor" : 1,
+        "ResultFile" : "samples_level_2",
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_20_3.msh",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/Example_1_2/data/electrodes.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/Example_1_2/data/transfer_matrix_3.npz"
     }
 }
 

@@ -27,11 +27,8 @@ MHProposal::MHProposal(pt::ptree const& pt,
   Eigen::VectorXd cov(problemDim);
   int i = 0;
   BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("")) {
-          if(i<problemDim){
-            std::cout << v.second.data() << std::endl;
-            cov(i) = stod(v.second.data());
-            i++;
-          }
+          cov(i) = stod(v.second.data());
+          i++;
   }
 
   // created a Gaussian with scaled identity covariance

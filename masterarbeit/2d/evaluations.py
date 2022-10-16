@@ -6,6 +6,7 @@ import meshio
 import arviz as az
 import matplotlib.pyplot as plt
 import matplotlib.patches as pt
+import math
 
 def get_midpoints(mesh):
         nodes = mesh.points
@@ -48,7 +49,6 @@ def draw_model(mesh_path, conductivities_path, point, center, ax):
                 pt.Arrow(point[0], point[1], 20*orientation[0], 20*orientation[1], width=5, facecolor="red"))
 
 
-
 def draw_cells(mesh_path, samples, ax, vmin=None, vmax=None):
         mesh = meshio.read(mesh_path)
         centers = get_midpoints(mesh)
@@ -88,3 +88,12 @@ def draw_point(axis, point, alpha=1):
         axis.add_artist(
                 pt.Circle(point,3,facecolor="red",alpha=alpha))
 
+def diagnostics(samples):
+        n = len(samples)
+        az.plot_trace(samples)
+        plt.xlabel('steps')
+        az.plot_autocorr(samples, max_lag=100)
+        plt.xlabel('lag')
+        print("Effective sample size: " + str(az.ess(samples)/n))
+        print("Autocorrelation time: " + str(n/az.ess(samples)))
+        print("MCSE: " + str(az.mcse(samples)))
