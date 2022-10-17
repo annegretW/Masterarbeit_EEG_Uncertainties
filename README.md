@@ -1,4 +1,11 @@
 ## File structure
+### duneuro
+https://www.medizin.uni-muenster.de/duneuro/startseite.html
+
+### muq
+https://mituq.bitbucket.io/source/_site/index.html
+
+### masterarbeit/2d
 * data - contains meshes, transfer matrices, electrodes, leadfield matrices 
 * evaluations - contains notebooks creating evaluations of the results
 * python - contains all python code to run the project
