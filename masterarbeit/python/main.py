@@ -34,15 +34,15 @@ radii = (92,86,80,78)
 conductivities = [0.00043,0.00001,0.00179,0.00033]
 
 # chosen reference source
-point = [110,120,130]
+point = [150,150,150]
 s_ref = get_dipole(point)
 
 # create a testmodel
 b_1010, sigma_0 = calc_disturbed_sensor_values(s_ref, "../data/electrodes_1010.txt")
 
 b_ref = [b_1010, b_1010, b_1010, b_1010]
-
-sigma = [4*sigma_0, 3*sigma_0, 2*sigma_0, sigma_0]
+print(b_1010)
+sigma = [8*sigma_0, 6*sigma_0, 4*sigma_0, 2*sigma_0]
 
 transfer_path_list = [
     "../data/transfer_matrix_1010_16.npz",

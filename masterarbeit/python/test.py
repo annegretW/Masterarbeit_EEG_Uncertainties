@@ -19,12 +19,12 @@ def relative_error(numerical_solution, analytical_solution):
 # Calc correct sensor values
 mesh_path='../data/tet_mesh.msh'
 tensors_path='../data/conductivities.txt'
-electrodes_path='../data/electrodes_1005.txt'
+electrodes_path='../data/electrodes_1010.txt'
 
 conductivities = [0.00043,0.00001,0.00179,0.00033]
 
-point = [110,120,130]
-point1 = [117.00655718, 122.71468457, 128.454283]
+point = [150,150,150]
+point1 = [143.75994539, 143.65759127, 144.18532249]
 
 # create mesh
 mesh = np.load('../data/mesh_64.npz')
@@ -58,8 +58,8 @@ source_model_cfg = {
         'restrict' : True,
         'initialization' : 'closest_vertex'
         }
-
-T2 = np.load("../data/transfer_matrix_1010_64.npz")['arr_0']
+'''
+T2 = np.load("../data/transfer_matrix_1010_128.npz")['arr_0']
 
 config = {
     'solver.reduction' : 1e-10,
@@ -105,9 +105,9 @@ print("-------------------------------------------------------------")
 print(np.amax(np.array(b_ref)-np.array(b_val1)))
 print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), 2))
 print("-------------------------------------------------------------")
+'''
 
-L = np.load("../data/leadfield_matrix_1010_64.npz")['arr_0']
-print(L) 
+L = np.load("../data/leadfield_matrix_1010_64.npz")['arr_0'] 
 
 index = msh.find_next_center_index(mesh['centers'][0], point)
 print(index)
@@ -126,18 +126,36 @@ print(mesh['centers'][0][index])
 #b_val1 -= np.mean(b_val1)
 
 #print(b_ref)
+#print(b_val0)
+#print(b_val1)
 print("Leadfield matrix")
-print(np.amax(np.array(b_ref)-np.array(b_val0)))
+print(np.amax(np.absolute(np.array(b_ref)-np.array(b_val0))))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val0), np.inf))
 print(np.linalg.norm(np.array(b_ref)-np.array(b_val0), 2))
 print("-------------------------------------------------------------")
-print(np.amax(np.array(b_ref)-np.array(b_val1)))
+print(np.amax(np.absolute(np.array(b_ref)-np.array(b_val1))))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), np.inf))
 print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), 2))
 print("-------------------------------------------------------------")
 
+b_ref = np.array(b_ref)
+b_val0 = np.array(b_val0)
+b_val1 = np.array(b_val1)
+
+b_val0 -= b_val0[0]
+b_val1 -= b_val1[0]
+b_ref -= b_ref[0]
 
 print(b_ref)
 print(b_val0)
-error = relative_error(b_ref, b_val0)
-print(error)
-error = relative_error(b_ref, b_val1)
-print(error)
+print(b_val1)
+
+print("Leadfield matrix")
+print(np.amax(np.absolute(np.array(b_ref)-np.array(b_val0))))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val0), np.inf))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val0), 2))
+print("-------------------------------------------------------------")
+print(np.amax(np.absolute(np.array(b_ref)-np.array(b_val1))))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), np.inf))
+print(np.linalg.norm(np.array(b_ref)-np.array(b_val1), 2))
+print("-------------------------------------------------------------")

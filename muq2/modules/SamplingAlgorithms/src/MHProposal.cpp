@@ -26,7 +26,7 @@ MHProposal::MHProposal(pt::ptree const& pt,
 
   Eigen::VectorXd cov(problemDim);
   int i = 0;
-  BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("")) {
+  BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, pt.get_child("ProposalVariance")) {
           cov(i) = stod(v.second.data());
           i++;
   }

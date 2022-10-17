@@ -56,51 +56,50 @@ void evaluate_samples(std::shared_ptr<SampleCollection> samps){
   std::cout << "  Spectral: " << spectralMCSE.transpose() << std::endl;
 }
 
-void MLDA(std::vector<std::shared_ptr<SamplingProblem>> sampling_problems, int n, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::vector<int> subsampling, std::string results_path){
-  // MLDA
+void MLDA(pt::ptree config){ 
+    std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
+
     pt::ptree ptProposal;
-    ptProposal.put("Subsampling_0", subsampling[0]); // Subsampling on level 0
-    ptProposal.put("Subsampling_1", subsampling[1]); // Subsampling on level 1
 
-    ptProposal.put("Proposal_Variance_Pos_0", proposal_pos_var[0]); // Proposal Variance on coarsest level
-    ptProposal.put("Proposal_Variance_Pos_1", proposal_pos_var[1]);
-    ptProposal.put("Proposal_Variance_Pos_2", proposal_pos_var[2]);
+    pt::ptree general_level_config = config.get_child("GeneralLevelConfig");
 
-    ptProposal.put("Proposal_Variance_Mom_0", proposal_mom_var[0]); // Proposal Variance on coarsest level
-    ptProposal.put("Proposal_Variance_Mom_1", proposal_mom_var[1]);
-    ptProposal.put("Proposal_Variance_Mom_2", proposal_mom_var[2]);
+    int level = 0;
+    int n = config.get_child("Sampling.Levels").size();
+    BOOST_FOREACH(const pt::ptree::value_type &v, config.get_child("Sampling.Levels")) {
+        pt::ptree level_config = config.get_child(v.second.data());
 
+        json um_config;
+        um_config["level"] = v.second.data();
+        sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config)));
+
+        if(level == 0){
+          if(level_config.get_child_optional("ProposalVariance") == boost::none){
+            ptProposal.add_child("ProposalVariance_0", general_level_config.get_child("ProposalVariance")); 
+          }
+          else{
+            ptProposal.add_child("ProposalVariance_0", level_config.get_child("ProposalVariance")); 
+          }
+        }
+
+        if(level != n-1){
+          std::cout << level << std::endl;
+          if(level_config.get_child_optional("Subsampling") == boost::none){
+            ptProposal.put("Subsampling_" + std::to_string(level), general_level_config.get<int>("Subsampling"));
+          }
+          else{
+            ptProposal.put("Subsampling_" + std::to_string(level), level_config.get<int>("Subsampling"));
+          }
+        }
+        
+        level ++;
+    }
+    
     auto proposal = std::make_shared<MLDAProposal>(ptProposal, sampling_problems.size()-1, sampling_problems);
 
     pt::ptree ptBlockID;
     ptBlockID.put("BlockIndex",0);
     std::vector<std::shared_ptr<TransitionKernel>> kernel(1);
-    // TODO: MLDA kernel here
     kernel[0] = std::make_shared<MLDAKernel>(ptBlockID,sampling_problems.back(),proposal);
-
-    pt::ptree pt;
-    pt.put("NumSamples", num_samples); // number of MCMC steps
-    pt.put("BurnIn", burn_in);
-    pt.put("PrintLevel",3);
-
-    auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
-
-    std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
-
-    samps->WriteToFile(results_path + "_mlda.h5");
-
-    evaluate_samples(samps);
-}
-
-void MH(std::shared_ptr<SamplingProblem> sampling_problem, boost::property_tree::ptree config){
-    auto problem = sampling_problem;
-    pt::ptree ptProposal = config.get_child("Level1.ProposalVariance");
-    auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
-
-    pt::ptree ptBlockID;
-    ptBlockID.put("BlockIndex",0);
-    std::vector<std::shared_ptr<TransitionKernel>> kernel(1);
-    kernel[0] = std::make_shared<MHKernel>(ptBlockID,problem,proposal);
 
     pt::ptree pt;
     pt.put("NumSamples", config.get<int>("Sampling.NumSamples")); // number of MCMC steps
@@ -108,74 +107,66 @@ void MH(std::shared_ptr<SamplingProblem> sampling_problem, boost::property_tree:
     pt.put("PrintLevel",3);
     auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
-    Eigen::VectorXd startPt(2);
-    startPt << 127, 127;
+    Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
+    startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
 
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-    samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + ".h5");
+    samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + config.get<std::string>("Sampling.ResultFile")  + ".h5");
     evaluate_samples(samps);
 }
 
-void example2d(std::string method, boost::property_tree::ptree config, int dim, Eigen::VectorXd startPt, int num_samples, int burn_in, std::vector<double> proposal_pos_var, std::vector<double> proposal_mom_var, std::vector<int> subsampling, std::string results_path){
-  std::vector<std::shared_ptr<SamplingProblem>> sampling_problems;
+void MH(pt::ptree config){   
+    BOOST_FOREACH(const pt::ptree::value_type &v, config.get_child("Sampling.Levels")) {
+      pt::ptree level_config = config.get_child(v.second.data());
 
+      json um_config;
+      um_config["level"] = v.second.data();
+      std::shared_ptr<SamplingProblem> sampling_problem = std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config));
+      
+      auto problem = sampling_problem;
+      pt::ptree ptProposal = level_config.get_child("ProposalVariance");
+      auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
+
+      pt::ptree ptBlockID;
+      ptBlockID.put("BlockIndex",0);
+      std::vector<std::shared_ptr<TransitionKernel>> kernel(1);
+      kernel[0] = std::make_shared<MHKernel>(ptBlockID,problem,proposal);
+
+      pt::ptree pt;
+      pt.put("NumSamples", config.get<int>("Sampling.NumSamples")); // number of MCMC steps
+      pt.put("BurnIn", config.get<int>("Sampling.BurnIn"));
+      pt.put("PrintLevel",3);
+      auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
+
+      Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
+      startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
+
+      std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
+
+      samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + level_config.get<std::string>("ResultFile")  + ".h5");
+      evaluate_samples(samps);
+    }
+}
+
+int main(int argc, char *argv[]){
+  // read configuration from file
+  pt::ptree config;
+  pt::json_parser::read_json(argv[1], config);
+
+  // choose an algorithm
+  std::string method = config.get<std::string>("Setup.Method");
+
+  // run chosen algorithm using the config
   if(method=="MCMC"){
-    json um_config;
-    um_config["level"] = 1;
-    std::shared_ptr<SamplingProblem> sampling_problem = std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config));
-    MH(sampling_problem, config);
+    MH(config);
   }
   else if(method=="MLDA"){
-    MLDA(sampling_problems, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, subsampling, results_path);
+    MLDA(config);
   }
   else{
     std::cout << "Method " +  method + " is not implemented." << std::endl;
   }
-}
-
-int main(int argc, char *argv[]){
-  boost::property_tree::ptree config;
-  boost::property_tree::json_parser::read_json("/home/anne/Masterarbeit/masterarbeit/2d/config.json", config);
-
-  int dim = atoi(argv[1]);
-
-  int num_samples = atoi(argv[2]);
-  int burn_in = atoi(argv[3]);
-
-  std::string results_path = argv[4];
-
-  double a = atof(argv[5]);
-  double b = atof(argv[6]);
-  double c = atof(argv[7]);
-
-  std::vector<double> proposal_pos_var;
-  proposal_pos_var = {a, b, c};
-
-  double d = atof(argv[8]);
-  double e = atof(argv[9]);
-  double f = atof(argv[10]);
-
-  std::vector<double> proposal_mom_var;
-  proposal_mom_var = {d, e, f};
-
-  Eigen::VectorXd startPt(dim);
-  if(dim==2){
-    startPt << atoi(argv[11]), atoi(argv[12]);
-  }
-  else{
-    startPt << atoi(argv[11]), atoi(argv[12]), atoi(argv[13]);
-  }
-
-  std::string method = config.get<std::string>("Setup.Method");
-  std::cout << method << std::endl;
-
-  int g = atoi(argv[15]);
-  int h = atoi(argv[16]);
-  std::vector<int> subsampling;
-  subsampling = {g, h};
-
-  example2d(method, config, dim, startPt, num_samples, burn_in, proposal_pos_var, proposal_mom_var, subsampling, results_path);
   return 0;
 }
 

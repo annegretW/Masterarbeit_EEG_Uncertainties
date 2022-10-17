@@ -194,7 +194,12 @@ class EEGModelFromFile(umbridge.Model):
             self.leadfield_matrix.append(np.load(leadfield_path_list[i])['arr_0'])
 
         # reference values of measurement values
-        self.b_ref = b_ref
+        self.b_ref = []
+        for b in b_ref:
+            b= np.array(b)
+            b -= b[0]
+            self.b_ref.append(b)
+        print(self.b_ref)
 
         # posterior variance
         self.sigma = sigma
@@ -215,14 +220,16 @@ class EEGModelFromFile(umbridge.Model):
         index = msh.find_next_center_index(self.mesh[i]['centers'][0],theta)
         #index = self.mesh[i].find_next_center_index(theta)
         #print(index)
-        b = self.leadfield_matrix[i][index]
+        b = np.array(self.leadfield_matrix[i][index])
+        b -= b[0]
+        #print(b)
         #node = self.mesh[i].nodes[i]
 
         # calculate the posterior as a normal distribution
         #error = utility_functions.relative_error(self.b_ref, b)
-        error = np.amax(np.absolute(np.array(self.b_ref)-np.array(b)))
-        posterior = -(1/(2*self.sigma[i]**2))*error**2
-        #posterior = -(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref)-np.array(b), 2))**2
+        #error = np.amax(np.absolute(np.array(self.b_ref)-np.array(b)))
+        #posterior = -(1/(2*self.sigma[i]**2))*error**2
+        posterior = -(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref)-np.array(b), 2))**2
 
         return posterior
         
