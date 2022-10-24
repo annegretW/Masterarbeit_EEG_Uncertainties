@@ -108,8 +108,12 @@ void MLDA(pt::ptree config){
     auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
     Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
-    startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
-
+    if (config.get<int>("Geometry.Dim") == 2) {
+        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
+      }
+    else {
+        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<int>("Sampling.StartPoint.rho");
+      }
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
     samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + config.get<std::string>("Sampling.ResultFile")  + ".h5");
@@ -125,7 +129,9 @@ void MH(pt::ptree config){
       std::shared_ptr<SamplingProblem> sampling_problem = std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config));
       
       auto problem = sampling_problem;
-      pt::ptree ptProposal = level_config.get_child("ProposalVariance");
+      pt::ptree ptProposal;
+      ptProposal.add_child("ProposalVariance", level_config.get_child("ProposalVariance"));
+
       auto proposal = std::make_shared<MHProposal>(ptProposal, problem);
 
       pt::ptree ptBlockID;
@@ -140,11 +146,16 @@ void MH(pt::ptree config){
       auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
       Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
-      startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
+      if (config.get<int>("Geometry.Dim") == 2) {
+        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
+      }
+      else {
+        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<int>("Sampling.StartPoint.rho");
+      }
 
       std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
-      samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + level_config.get<std::string>("ResultFile")  + ".h5");
+      samps->WriteToFile(config.get<std::string>("Setup.OutputPath") + config.get<std::string>("Sampling.ResultFile")  + ".h5");
       evaluate_samples(samps);
     }
 }

@@ -16,11 +16,13 @@ if __name__ == "__main__":
 
     conductivities_path = config["Geometry"]["Conductivities"]
 
+    general_level_config = config["GeneralLevelConfig"]
     levels = config["Sampling"]["Levels"]
     for level in levels:
         level_config = config[level]
-        electrodes_path = level_config["Electrodes"]
-        mesh_path = level_config["Mesh"]
+        electrodes_path = level_config["Electrodes"] if "Electrodes" in level_config else general_level_config["Electrodes"]     
+        mesh_path = level_config["Mesh"] if "Mesh" in level_config else general_level_config["Mesh"]   
+
 
         # Generate electrode positions if not already existing  
         if not exists(electrodes_path):

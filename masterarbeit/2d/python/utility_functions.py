@@ -27,9 +27,6 @@ def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_
 
 
 def save_transfer_matrix(electrodes_path, conductivities_path, mesh_path, path_transfer):
-    # read mesh
-    mesh = meshio.read(mesh_path)
-
     # generate transfer matrix
     transfer_matrix = create_transfer_matrix(mesh_path, conductivities_path, electrodes_path)[0]
     
@@ -96,7 +93,7 @@ def get_electrodes(electrodes_path, mesh_path):
     print(len(electrodes))
     np.savez_compressed(electrodes_path, electrodes)
 
-def calc_sensor_values(s_ref, electrodes_path, mesh_path, tensors_path):
+def calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities):
     print("s_ref = %s \n" % s_ref)
     #b_ref = analytical_solution(s_ref, mesh_path, tensors_path, electrodes_path)
 
@@ -118,14 +115,14 @@ def calc_sensor_values(s_ref, electrodes_path, mesh_path, tensors_path):
         'subtract_mean' : True
     }
 
-    T, meg_driver = create_transfer_matrix(mesh_path, tensors_path, electrodes_path)
+    T, meg_driver = create_transfer_matrix(mesh_path, conductivities, electrodes_path)
     b_ref = meg_driver.applyEEGTransfer(T,[s_ref],config)[0][0]
 
     return b_ref
 
 
-def calc_disturbed_sensor_values(s_ref, electrodes_path, mesh_path, tensors_path, relative_noise):
-    b_ref = calc_sensor_values(s_ref, electrodes_path, mesh_path, tensors_path)
+def calc_disturbed_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, relative_noise):
+    b_ref = calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities)
 
     # Disturb sensor values
     sigma = relative_noise*np.amax(np.absolute(b_ref))

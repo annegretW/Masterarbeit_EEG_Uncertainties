@@ -1,0 +1,63 @@
+{
+    "Setup" : {
+        "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
+        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/",
+        "Method" : "MLDA",
+        "Matrix" : "T"
+    },
+    "ModelConfig" : {
+        "Dipole" : {
+            "Type" : "Arbitrary",
+            "Position" : {
+                "x" : 170,
+                "y" : 150
+            },
+            "Orientation" : {
+                "rho" : 1
+            }
+        }, 
+        "RelativeNoise" : 0.005
+    },
+    "Geometry" : {
+        "Dim" : 3,
+        "Conductivities" : [0.0000000001,0.00043,0.00043,0.00001,0.00179,0.00033],
+        "Center" : {
+            "x" : 128,
+            "y" : 128
+        },
+        "Radii" : [92,86,78]
+    },
+    "Sampling" : {
+        "ResultFile" : "samples_mlda",
+        "NumSamples" : 10000,
+        "BurnIn" : 1000,
+        "StartPoint" : {
+            "x" : 127,
+            "y" : 127,
+            "rho" : 0
+        },
+        "Levels" : ["Level1", "Level2", "Level3"]
+    },
+    "GeneralLevelConfig" : {
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes.npz"
+    },
+    "Level1" : {
+        "ProposalVariance" : [8, 8, 0.2],
+        "Subsampling" : 5, 
+        "VarFactor" : 8,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_64.npz"
+    },
+    "Level2" : {
+        "Subsampling" : 3,
+        "VarFactor" : 14,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_128.npz"
+    },
+    "Level3" : {
+        "VarFactor" : 1,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_256.npz"
+    }
+}
+

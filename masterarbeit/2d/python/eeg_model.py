@@ -6,6 +6,7 @@ import utility_functions
 import meshio
 import math
 import json
+from scipy.io import loadmat
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
@@ -87,7 +88,7 @@ class EEGModelLeadfield(umbridge.Model):
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
 class EEGModelTransfer(umbridge.Model):
-    def __init__(self, levels, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities_path, center, mode='Radial dipole'):
+    def __init__(self, levels, b_ref, sigma, transfer_path_list, mesh_path_list, conductivities, center, mode='Radial dipole'):
         super(EEGModelTransfer, self).__init__()
 
         assert(mode in ['Radial','Arbitrary'])
@@ -99,24 +100,52 @@ class EEGModelTransfer(umbridge.Model):
         self.meg_drivers = {}
         self.m = {}
 
-        for l in levels:
-            # read mesh
-            mesh = meshio.read(mesh_path_list[l])
-            self.mesh[l] = mesh
-            #self.mesh.append(msh.StructuredMesh(center, radii, cells_per_dim[i]))
-            self.transfer_matrix[l] = np.load(transfer_path_list[l])['arr_0']
+        self.tissue_probs = {}
 
-            config = {
-                'type' : 'fitted',
-                'solver_type' : 'cg',
-                'element_type' : 'tetrahedron',
-                'volume_conductor': {
-                    'grid.filename' : mesh_path_list[l], 
-                    'tensors.filename' : conductivities_path
-                },
-                'post_process' : 'true', 
-                'subtract_mean' : 'true'
-            }
+        for l in levels:
+            self.transfer_matrix[l] = np.load(transfer_path_list[l])['arr_0']
+            
+            if mesh_path_list[l].split(".")[-1] == "msh":
+                # read mesh
+                mesh = meshio.read(mesh_path_list[l])
+                self.mesh[l] = mesh
+                config = {
+                    'type' : 'fitted',
+                    'solver_type' : 'cg',
+                    'element_type' : 'tetrahedron',
+                    'volume_conductor': {
+                        'grid.filename' : mesh_path_list[l], 
+                        'tensors.filename' : conductivities
+                    },
+                    'post_process' : 'true', 
+                    'subtract_mean' : 'true'
+                }
+                self.tissue_probs[l] = np.ones(len(mesh.cells))
+
+            else:
+                # read mesh
+                mesh = np.load(mesh_path_list[l])
+                self.mesh[l] = mesh
+
+                self.tissue_probs[l] = mesh['gray_probs']
+                config = {
+                    'type' : 'fitted',
+                    'solver_type' : 'cg',
+                    'element_type' : 'hexahedron',
+                    'volume_conductor' : {
+                        'grid' : {
+                            'elements' : mesh['elements'].tolist(),
+                            'nodes' : mesh['nodes'].tolist()
+                        },
+                        'tensors' : {
+                            'labels' : mesh['labels'].tolist(),
+                            'conductivities' : conductivities
+                        },
+                    },
+                    'post_process' : 'true', 
+                    'subtract_mean' : 'true'
+                }
+
             meg_driver = dp.MEEGDriver2d(config)
             self.meg_drivers[l] = meg_driver
 
@@ -149,6 +178,9 @@ class EEGModelTransfer(umbridge.Model):
             'subtract_mean' : True
         }
 
+        #tissue_prob_map = loadmat('/home/anne/Masterarbeit/masterarbeit/2d//data/T1SliceAnne.mat')
+        #self.gray_prob = tissue_prob_map['T1Slice']['gray'][0][0]
+
     def get_input_sizes(self):
         if self.mode=='Radial':
             return [self.dim]
@@ -175,7 +207,6 @@ class EEGModelTransfer(umbridge.Model):
 
         # calculate the posterior as a normal distribution
         posterior = ((1/(2*self.sigma[level]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level]**2))*(np.linalg.norm(np.array(self.b_ref[level])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level]), 2))**2)
-        #posterior = ((1/(2*self.sigma[i]**2))**(self.m/2))*np.exp(-(1/(2*self.sigma[i]**2))*(np.linalg.norm(np.array(self.b_ref[i])-np.array(b), 2))**2)
 
         if posterior==0:
            return -1e20
@@ -206,7 +237,7 @@ if __name__ == "__main__":
     # Set parameters
     center = (config["Geometry"]["Center"]["x"], config["Geometry"]["Center"]["y"])
     radii = config["Geometry"]["Conductivities"]
-    path_conductivities = config["Geometry"]["Conductivities"]
+    conductivities = config["Geometry"]["Conductivities"]
 
     # Set type
     dipole_type = config["ModelConfig"]["Dipole"]["Type"]
@@ -217,7 +248,7 @@ if __name__ == "__main__":
     if dipole_type == 'Radial':
         s_ref = utility_functions.get_radial_dipole(position,center)
     else:
-        rho = config["Dipole"]["Orientation"]
+        rho = config["ModelConfig"]["Dipole"]["Orientation"]["rho"]
         s_ref = utility_functions.get_dipole(position,center,rho)
     
     # Set paths
@@ -247,16 +278,16 @@ if __name__ == "__main__":
         b_ref[level] = np.zeros(m)
 
         if relative_noise==0:
-            b_ref[level] = utility_functions.calc_sensor_values(s_ref, path_electrodes[level], path_meshs[level], path_conductivities)
+            b_ref[level] = utility_functions.calc_sensor_values(s_ref, path_electrodes[level], path_meshs[level], conductivities)
             sigma_0 = 0.001*np.amax(np.absolute(b_ref[level]))
         else:
-            b_ref[level], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes[level], path_meshs[level], path_conductivities, relative_noise)
+            b_ref[level], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes[level], path_meshs[level], conductivities, relative_noise)
 
         sigma[level] = var_factor[level]*sigma_0
 
     # Create EEG modell
     if model=='T':
-        testmodel = EEGModelTransfer(levels, b_ref, sigma, path_matrices, path_meshs, path_conductivities, center, dipole_type)
+        testmodel = EEGModelTransfer(levels, b_ref, sigma, path_matrices, path_meshs, conductivities, center, dipole_type)
     elif model == 'L':
         testmodel = EEGModelLeadfield(levels, b_ref, sigma, path_matrices, path_meshs)
 

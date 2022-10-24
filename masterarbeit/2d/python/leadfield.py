@@ -67,8 +67,41 @@ def create_leadfield(mesh_path, tensors_path, electrodes_path, dipoles):
 
     return transfer_matrix, leadfield_matrix
 
-def create_transfer_matrix(mesh_path, tensors_path, electrodes_path):
-    config = {
+def create_transfer_matrix(mesh_path, conductivities, electrodes_path):
+    if mesh_path.split(".")[-1] == "msh":
+        config = {
+            'type' : 'fitted',
+            'solver_type' : 'cg',
+            'element_type' : 'tetrahedron',
+            'volume_conductor': {
+                'grid.filename' : mesh_path, 
+                'tensors.filename' : conductivities
+                },
+            'post_process' : 'true', 
+            'subtract_mean' : 'true'
+        }
+    else:
+        mesh = np.load(mesh_path)
+        print(conductivities)
+        config = {
+            'type' : 'fitted',
+            'solver_type' : 'cg',
+            'element_type' : 'hexahedron',
+            'volume_conductor' : {
+                'grid' : {
+                    'elements' : mesh['elements'].tolist(),
+                    'nodes' : mesh['nodes'].tolist()
+                },
+                'tensors' : {
+                    'labels' : mesh['labels'].tolist(),
+                    'conductivities' : conductivities
+                },
+            },
+            'post_process' : 'true', 
+            'subtract_mean' : 'true'
+        }
+
+    '''    config = {
         'type' : 'fitted',
         'solver_type' : 'cg',
         'element_type' : 'tetrahedron',
@@ -78,7 +111,8 @@ def create_transfer_matrix(mesh_path, tensors_path, electrodes_path):
          },
          'post_process' : 'true', 
          'subtract_mean' : 'true'
-    }
+    }'''
+
     meg_driver = dp.MEEGDriver2d(config)
 
     # Set electrode positions
