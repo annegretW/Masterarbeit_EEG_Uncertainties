@@ -26,7 +26,7 @@
     },
     "Sampling" : {
         "ResultFile" : "samples_mlda",
-        "NumSamples" : 5000,
+        "NumSamples" : 2000,
         "BurnIn" : 200,
         "StartPoint" : {
             "x" : 127,

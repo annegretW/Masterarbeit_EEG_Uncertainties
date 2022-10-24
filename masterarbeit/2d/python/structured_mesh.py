@@ -3,12 +3,14 @@ from scipy import integrate
 from scipy.io import loadmat
 
 class StructuredMesh():
-    def __init__(self, coarseness, path):
+    def __init__(self, cells_per_dim, path=None):
         center = np.array([128, 128])
         width = 256
-        cells_per_dim = int(256/coarseness)
+        #cells_per_dim = int(256/coarseness)
+        coarseness = int(256/cells_per_dim)
 
         self.center = center
+        self.width = width
         self.cells_per_dim = cells_per_dim
         self.cell_size = width/self.cells_per_dim
 
@@ -30,16 +32,15 @@ class StructuredMesh():
         elements[:,0] = np.delete(idx_nodes, np.append(idx_right, idx_top))
         elements[:,1] = elements[:,0] + 1
         elements[:,[2,3]] = elements[:,[0,1]] + nr_nodes
-        nr_elements = len(elements)
-
+        
         # create tissue labels for elements in bounding box
-        tissue_prob_map = loadmat('/home/anne/Masterarbeit/masterarbeit/2d//data/T1SliceAnne.mat')
+        tissue_prob_map = loadmat('/home/anne/Masterarbeit/masterarbeit/2d/data/T1SliceAnne.mat')
 
-        gray_prob = np.zeros((cells_per_dim, cells_per_dim))
-        white_prob = np.zeros((cells_per_dim, cells_per_dim))
-        skull_prob = np.zeros((cells_per_dim, cells_per_dim))
-        csf_prob = np.zeros((cells_per_dim, cells_per_dim))
-        scalp_prob = np.zeros((cells_per_dim, cells_per_dim))
+        gray_prob = np.zeros((cells_per_dim, cells_per_dim),float)
+        white_prob = np.zeros((cells_per_dim, cells_per_dim),float)
+        skull_prob = np.zeros((cells_per_dim, cells_per_dim),float)
+        csf_prob = np.zeros((cells_per_dim, cells_per_dim),float)
+        scalp_prob = np.zeros((cells_per_dim, cells_per_dim),float)
 
         for i in range(cells_per_dim):
             for j in range(cells_per_dim):
@@ -56,7 +57,7 @@ class StructuredMesh():
                 csf_prob[i,j] = csf_prob[i,j]/(coarseness**2)
                 scalp_prob[i,j] = scalp_prob[i,j]/(coarseness**2)
 
-        gray_probs = np.zeros((cells_per_dim,cells_per_dim), dtype=int)
+        gray_probs = np.zeros((cells_per_dim,cells_per_dim), dtype=float)
         labels = np.zeros((cells_per_dim,cells_per_dim), dtype=int)
         for i in range(cells_per_dim):
             for j in range(cells_per_dim):
@@ -79,6 +80,18 @@ class StructuredMesh():
         self.gray_probs = np.ravel(gray_probs, order='F')
         self.labels = np.ravel(labels, order='F').astype(int)
 
-        np.savez_compressed(path, elements=self.elements, nodes=self.nodes, labels=self.labels, gray_probs=self.gray_probs)
+        centers = np.empty((N**2,2))
+        for i in range(N**2):
+            centers[i] = (self.nodes[self.elements[i,0]]+self.nodes[self.elements[i,1]]+self.nodes[self.elements[i,2]]+self.nodes[self.elements[i,3]])/4
+
+        self.centers = centers
+
+        if path != None:
+            np.savez_compressed(path, elements=self.elements, centers=self.centers, nodes=self.nodes, labels=self.labels, gray_probs=self.gray_probs)
 
         print("\nCreated new mesh with \n " + str(len(self.nodes)) + " nodes \n " + str(len(self.elements)) + " elements\n")
+
+    def find_next_center(self, point):
+        p = np.array(point) + self.cell_size/2
+        return np.divmod(p, self.cell_size)[0]
+        

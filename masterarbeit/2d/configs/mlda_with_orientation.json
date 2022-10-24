@@ -9,8 +9,8 @@
         "Dipole" : {
             "Type" : "Arbitrary",
             "Position" : {
-                "x" : 170,
-                "y" : 150
+                "x" : 80,
+                "y" : 80
             },
             "Orientation" : {
                 "rho" : 1
@@ -39,24 +39,25 @@
         "Levels" : ["Level1", "Level2", "Level3"]
     },
     "GeneralLevelConfig" : {
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes.npz"
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes.npz",
+        "MeshType" : "Structured"
     },
     "Level1" : {
-        "ProposalVariance" : [8, 8, 0.2],
+        "ProposalVariance" : [4, 4, 0.1],
         "Subsampling" : 5, 
         "VarFactor" : 8,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
+        "Mesh" : 64,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_64.npz"
     },
     "Level2" : {
         "Subsampling" : 3,
-        "VarFactor" : 14,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
+        "VarFactor" : 1,
+        "Mesh" : 128,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_128.npz"
     },
     "Level3" : {
         "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
+        "Mesh" : 256,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_256.npz"
     }
 }

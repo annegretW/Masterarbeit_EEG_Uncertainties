@@ -9,8 +9,8 @@
         "Dipole" : {
             "Type" : "Arbitrary",
             "Position" : {
-                "x" : 170,
-                "y" : 150
+                "x" : 80,
+                "y" : 80
             },
             "Orientation" : {
                 "rho" : 1
@@ -39,13 +39,15 @@
         "Levels" : ["Level1"]
     },
     "GeneralLevelConfig" : {
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes.npz"
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes.npz",
+        "MeshType" : "Structured"
     },
     "Level1" : {
         "ProposalVariance" : [8, 8, 0.2],
         "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_256.npz"
+        "Mesh" : 256,
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_256.npz",
+        "SourceModel" : "Venant"
     }
 }
 
