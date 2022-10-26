@@ -89,7 +89,7 @@ class EEGModelLeadfield(umbridge.Model):
 #   sigma               - posterior variance                                                    #
 ##################################################################################################
 class EEGModelTransfer(umbridge.Model):
-    def __init__(self, levels, b_ref, sigma, transfer_path_list, mesh_types, mesh_list, conductivities, center, mode='Radial dipole'):
+    def __init__(self, config, levels, b_ref, sigma, transfer_path_list, mesh_types, mesh_list, conductivities, center, mode):
         super(EEGModelTransfer, self).__init__()
 
         assert(mode in ['Radial','Arbitrary'])
@@ -102,6 +102,7 @@ class EEGModelTransfer(umbridge.Model):
         self.m = {}
 
         self.tissue_probs = {}
+        self.config = {}
 
         for l in levels:
             self.transfer_matrix[l] = np.load(transfer_path_list[l])['arr_0']
@@ -166,6 +167,35 @@ class EEGModelTransfer(umbridge.Model):
                 }
                 self.tissue_probs[l] = mesh.gray_probs
 
+            config_source = config[config[level]["SourceModel"]]
+            if config_source["type"] =="Venant":
+                source_model_config = {
+                    'type' : config_source["type"],
+                    'numberOfMoments' : config_source["numberOfMoments"],
+                    'referenceLength' : config_source["referenceLength"],
+                    'weightingExponent' : config_source["weightingExponent"],
+                    'relaxationFactor' : config_source["relaxationFactor"],
+                    'mixedMoments' : bool(config_source["mixedMoments"]),
+                    'restrict' : bool(config_source["restrict"]),
+                    'initialization' : config_source["initialization"],
+                }
+            elif config_source["type"] =="Subtraction":
+                source_model_config = {
+                    "type": "subtraction",
+                    "intorderadd" : 2,
+                    "intorderadd_lb" : 2
+                }
+            else:
+                source_model_config = {
+                    "type": "partial_integration"
+                }
+
+            self.config[l] = {
+                'solver.reduction' : 1e-10,
+                'source_model' : source_model_config,
+                'post_process' : True,
+                'subtract_mean' : True
+            }
 
             meg_driver = dp.MEEGDriver2d(config)
             self.meg_drivers[l] = meg_driver
@@ -181,24 +211,7 @@ class EEGModelTransfer(umbridge.Model):
         self.center = center
         self.dim = len(center)
 
-        source_model_config = {
-            'type' : 'venant',
-            'numberOfMoments' : 3,
-            'referenceLength' : 20,
-            'weightingExponent' : 1,
-            'relaxationFactor' : 1e-6,
-            'mixedMoments' : True,
-            'restrict' : True,
-            'initialization' : 'closest_vertex'
-        }
-
-        self.config = {
-            'solver.reduction' : 1e-10,
-            'source_model' : source_model_config,
-            'post_process' : True,
-            'subtract_mean' : True
-        }
-
+        
         #tissue_prob_map = loadmat('/home/anne/Masterarbeit/masterarbeit/2d//data/T1SliceAnne.mat')
         #self.gray_prob = tissue_prob_map['T1Slice']['gray'][0][0]
 
@@ -224,7 +237,7 @@ class EEGModelTransfer(umbridge.Model):
 
         #next_dipole = utility_functions.get_radial_dipole(theta, self.center)
 
-        b = self.meg_drivers[level].applyEEGTransfer(self.transfer_matrix[level],[next_dipole],self.config)[0]
+        b = self.meg_drivers[level].applyEEGTransfer(self.transfer_matrix[level],[next_dipole],self.config[level])[0]
 
         # calculate the posterior as a normal distribution
         c = self.mesh[level].find_next_center(theta)
@@ -314,7 +327,7 @@ if __name__ == "__main__":
 
     # Create EEG modell
     if model=='T':
-        testmodel = EEGModelTransfer(levels, b_ref, sigma, path_matrices, mesh_types, path_meshs, conductivities, center, dipole_type)
+        testmodel = EEGModelTransfer(config, levels, b_ref, sigma, path_matrices, mesh_types, path_meshs, conductivities, center, dipole_type)
     elif model == 'L':
         testmodel = EEGModelLeadfield(levels, b_ref, sigma, path_matrices, path_meshs)
 

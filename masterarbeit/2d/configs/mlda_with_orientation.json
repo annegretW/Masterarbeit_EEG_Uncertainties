@@ -9,7 +9,7 @@
         "Dipole" : {
             "Type" : "Arbitrary",
             "Position" : {
-                "x" : 80,
+                "x" : 85,
                 "y" : 80
             },
             "Orientation" : {
@@ -43,14 +43,14 @@
         "MeshType" : "Structured"
     },
     "Level1" : {
-        "ProposalVariance" : [4, 4, 0.1],
-        "Subsampling" : 5, 
-        "VarFactor" : 8,
+        "ProposalVariance" : [10, 10, 0.1],
+        "Subsampling" : 10, 
+        "VarFactor" : 2,
         "Mesh" : 64,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_64.npz"
     },
     "Level2" : {
-        "Subsampling" : 3,
+        "Subsampling" : 5,
         "VarFactor" : 1,
         "Mesh" : 128,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_128.npz"

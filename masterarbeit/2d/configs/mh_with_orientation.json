@@ -9,7 +9,7 @@
         "Dipole" : {
             "Type" : "Arbitrary",
             "Position" : {
-                "x" : 80,
+                "x" : 85,
                 "y" : 80
             },
             "Orientation" : {
@@ -29,7 +29,7 @@
     },
     "Sampling" : {
         "ResultFile" : "samples_mh",
-        "NumSamples" : 10000,
+        "NumSamples" : 20000,
         "BurnIn" : 1000,
         "StartPoint" : {
             "x" : 127,
@@ -48,6 +48,24 @@
         "Mesh" : 256,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_256.npz",
         "SourceModel" : "Venant"
+    },
+    "Venant" : {
+        "type": "venant",
+        "numberOfMoments" : 2,
+        "referenceLength" : 20,
+        "weightingExponent" : 1,
+        "relaxationFactor" : 1e-6,
+        "mixedMoments" : "True",
+        "restrict" : "True",
+        "initialization" : "closest_vertex"
+    },
+    "Subtraction" : {
+        "type": "subtraction",
+        "intorderadd" : 2,
+        "intorderadd_lb" : 2
+    },
+    "PartialIntegration" : {
+        "type": "partial_integration"
     }
 }
 
