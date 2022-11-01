@@ -2,7 +2,7 @@
     "Setup" : {
         "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
         "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/",
-        "Method" : "MLDA",
+        "Method" : "MCMC",
         "Matrix" : "T"
     },
     "ModelConfig" : {
@@ -28,40 +28,25 @@
         "Radii" : [92,86,78]
     },
     "Sampling" : {
-        "ResultFile" : "samples_mlda_1",
+        "ResultFile" : "samples_mh_test",
         "NumSamples" : 10000,
-        "BurnIn" : 1000,
+        "BurnIn" : 0,
         "StartPoint" : {
             "x" : 150,
             "y" : 160,
             "rho" : 0
         },
-        "Levels" : ["Level1","Level2"]
+        "Levels" : ["Level1"]
     },
     "GeneralLevelConfig" : {
         "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz",
         "MeshType" : "Structured"
     },
     "Level1" : {
-        "ProposalVariance" : [16, 16, 0.1],
-        "Subsampling" : 7, 
-        "VarFactor" : 1,
+        "ProposalVariance" : [8, 8, 0.1],
+        "VarFactor" : 2,
         "Mesh" : 64,
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_64.npz",
-        "SourceModel" : "Venant"
-    },
-    "Level2" : {
-        "Subsampling" : 3,
-        "VarFactor" : 1,
-        "Mesh" : 128,
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_128.npz",
-        "SourceModel" : "Venant"
-    },
-    "Level3" : {
-        "Subsampling" : 1,
-        "VarFactor" : 1,
-        "Mesh" : 256,
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",
         "SourceModel" : "Venant"
     },
     "Venant" : {

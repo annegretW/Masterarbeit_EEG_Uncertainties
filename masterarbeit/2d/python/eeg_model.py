@@ -111,7 +111,7 @@ class EEGModelTransfer(umbridge.Model):
                 if mesh_list[l].split(".")[-1] == "msh":
                     mesh = meshio.read(mesh_list[l])
                     self.mesh[l] = mesh
-                    config = {
+                    driver_config = {
                         'type' : 'fitted',
                         'solver_type' : 'cg',
                         'element_type' : 'tetrahedron',
@@ -126,7 +126,7 @@ class EEGModelTransfer(umbridge.Model):
                 else:
                     mesh = np.load(mesh_list[l])
                     self.mesh[l] = mesh
-                    config = {
+                    driver_config = {
                         'type' : 'fitted',
                         'solver_type' : 'cg',
                         'element_type' : 'hexahedron',
@@ -148,7 +148,7 @@ class EEGModelTransfer(umbridge.Model):
             else:
                 mesh = msh.StructuredMesh(mesh_list[l])
                 self.mesh[l] = mesh
-                config = {
+                driver_config = {
                     'type' : 'fitted',
                     'solver_type' : 'cg',
                     'element_type' : 'hexahedron',
@@ -167,7 +167,8 @@ class EEGModelTransfer(umbridge.Model):
                 }
                 self.tissue_probs[l] = mesh.gray_probs
 
-            config_source = config[config[level]["SourceModel"]]
+            config_source = config[config[level]["SourceModel"]] if "SourceModel" in config[level] else config[config["GeneralLevelConfig"]["SourceModel"]]   
+
             if config_source["type"] =="Venant":
                 source_model_config = {
                     'type' : config_source["type"],
@@ -197,7 +198,7 @@ class EEGModelTransfer(umbridge.Model):
                 'subtract_mean' : True
             }
 
-            meg_driver = dp.MEEGDriver2d(config)
+            meg_driver = dp.MEEGDriver2d(driver_config)
             self.meg_drivers[l] = meg_driver
 
             self.m[l] = len(b_ref[l])
@@ -247,6 +248,10 @@ class EEGModelTransfer(umbridge.Model):
 
         if posterior==0:
            return -1e20
+
+        '''if(level=="Level3"):
+            print(theta)
+            print(posterior)'''
 
         return np.log(posterior)
         

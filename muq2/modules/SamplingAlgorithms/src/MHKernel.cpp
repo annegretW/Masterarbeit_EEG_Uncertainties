@@ -80,7 +80,11 @@ std::vector<std::shared_ptr<SamplingState>> MHKernel::Step(unsigned int const t,
   const double alpha = std::exp(propTarget - forwardPropDens - currentTarget + backPropDens);
 
   if(0){
-  std::cout << std::to_string(propTarget - forwardPropDens - currentTarget + backPropDens) << std::endl;
+  //std::cout << std::to_string(propTarget - forwardPropDens - currentTarget + backPropDens) << std::endl;
+  std::cout << std::to_string(currentTarget) << std::endl;
+  std::cout << std::to_string(backPropDens) << std::endl;
+  std::cout << std::to_string(propTarget) << std::endl;
+  std::cout << std::to_string(forwardPropDens) << std::endl;
   std::cout << std::to_string(alpha) << std::endl;
   }
   

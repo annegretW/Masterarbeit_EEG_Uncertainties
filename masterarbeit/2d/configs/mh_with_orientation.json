@@ -9,8 +9,8 @@
         "Dipole" : {
             "Type" : "Arbitrary",
             "Position" : {
-                "x" : 85,
-                "y" : 80
+                "x" : 180,
+                "y" : 180
             },
             "Orientation" : {
                 "rho" : 1
@@ -29,24 +29,31 @@
     },
     "Sampling" : {
         "ResultFile" : "samples_mh",
-        "NumSamples" : 20000,
-        "BurnIn" : 1000,
+        "NumSamples" : 700000,
+        "BurnIn" : 5000,
         "StartPoint" : {
-            "x" : 127,
-            "y" : 127,
+            "x" : 150,
+            "y" : 160,
             "rho" : 0
         },
-        "Levels" : ["Level1"]
+        "Levels" : ["Level3"]
     },
     "GeneralLevelConfig" : {
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz",
         "MeshType" : "Structured"
     },
-    "Level1" : {
-        "ProposalVariance" : [8, 8, 0.2],
+    "Level3" : {
+        "ProposalVariance" : [8, 8, 0.1],
         "VarFactor" : 1,
         "Mesh" : 256,
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_hex_256.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",
+        "SourceModel" : "Venant"
+    },
+    "Level2" : {
+        "ProposalVariance" : [1, 1, 0.01],
+        "VarFactor" : 1,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_20_1.msh",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_1.npz",
         "SourceModel" : "Venant"
     },
     "Venant" : {

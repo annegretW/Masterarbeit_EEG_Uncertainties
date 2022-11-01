@@ -18,6 +18,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <boost/foreach.hpp>
+#include <chrono>
 
 namespace pt = boost::property_tree;
 using namespace muq::Modeling;
@@ -72,6 +73,9 @@ void MLDA(pt::ptree config){
         um_config["level"] = v.second.data();
         sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config)));
 
+        std::cout << level << std::endl;
+        std::cout << level_config.get<std::string>("Mesh") << std::endl;
+
         if(level == 0){
           if(level_config.get_child_optional("ProposalVariance") == boost::none){
             ptProposal.add_child("ProposalVariance_0", general_level_config.get_child("ProposalVariance")); 
@@ -112,7 +116,7 @@ void MLDA(pt::ptree config){
         startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
       }
     else {
-        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<int>("Sampling.StartPoint.rho");
+        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");
       }
     std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
 
@@ -150,7 +154,7 @@ void MH(pt::ptree config){
         startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
       }
       else {
-        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<int>("Sampling.StartPoint.rho");
+        startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");
       }
 
       std::shared_ptr<SampleCollection> samps = chain->Run(startPt);
@@ -169,6 +173,7 @@ int main(int argc, char *argv[]){
   std::string method = config.get<std::string>("Setup.Method");
 
   // run chosen algorithm using the config
+  auto start = std::chrono::high_resolution_clock::now();
   if(method=="MCMC"){
     MH(config);
   }
@@ -178,6 +183,10 @@ int main(int argc, char *argv[]){
   else{
     std::cout << "Method " +  method + " is not implemented." << std::endl;
   }
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+  std::cout << "Duration time: " << duration.count() << "s" << std::endl;
+
   return 0;
 }
 

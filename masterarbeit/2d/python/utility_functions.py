@@ -26,9 +26,9 @@ def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_
     np.savez_compressed(path_leadfield, leadfield_matrix)
 
 
-def save_transfer_matrix(electrodes_path, conductivities_path, mesh_path, path_transfer):
+def save_transfer_matrix(electrodes_path, conductivities_path, mesh_type, mesh_path, path_transfer):
     # generate transfer matrix
-    transfer_matrix = create_transfer_matrix(mesh_path, conductivities_path, electrodes_path)[0]
+    transfer_matrix = create_transfer_matrix(mesh_type, mesh_path, conductivities_path, electrodes_path)[0]
     
     # save transfer matrix
     np.savez_compressed(path_transfer, transfer_matrix)
