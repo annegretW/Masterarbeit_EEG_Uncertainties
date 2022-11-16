@@ -29,7 +29,14 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
 
   boost::property_tree::ptree pt_subchain;
   // Subsampling steps on level as defined in MLDA ptree
-  pt_subchain.put("NumSamples", pt.get<int>("Subsampling_" + std::to_string(level-1)));
+  std::default_random_engine generator;
+  std::random_device rd; 
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> distribution(2,pt.get<int>("Subsampling_" + std::to_string(level-1)));
+  int subchain_length = distribution(gen);
+  //int subchain_length = pt.get<int>("Subsampling_" + std::to_string(level-1));
+  //std::cout << subchain_length << std::endl;
+  pt_subchain.put("NumSamples", subchain_length);
   pt_subchain.put("BurnIn", 0);
   pt_subchain.put("PrintLevel",0);
   auto subchain = std::make_shared<SingleChainMCMC>(pt_subchain,kernel);
