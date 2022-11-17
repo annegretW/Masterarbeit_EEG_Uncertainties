@@ -5,6 +5,8 @@ using namespace muq::SamplingAlgorithms;
 
 namespace pt = boost::property_tree;
 
+extern std::vector<int> numberOfSamplesPerLevel;
+std::vector<int> numberOfSamplesPerLevel = {};
 
 std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingState> const& currentState) {
   auto problem = sampling_problems[level-1];
@@ -33,8 +35,8 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
   std::random_device rd; 
   std::mt19937 gen(rd());
   std::uniform_int_distribution<int> distribution(2,pt.get<int>("Subsampling_" + std::to_string(level-1)));
-  int subchain_length = distribution(gen);
-  //int subchain_length = pt.get<int>("Subsampling_" + std::to_string(level-1));
+  //int subchain_length = distribution(gen);
+  int subchain_length = pt.get<int>("Subsampling_" + std::to_string(level-1));
   //std::cout << subchain_length << std::endl;
   pt_subchain.put("NumSamples", subchain_length);
   pt_subchain.put("BurnIn", 0);
@@ -42,6 +44,10 @@ std::shared_ptr<SamplingState> MLDAProposal::Sample(std::shared_ptr<SamplingStat
   auto subchain = std::make_shared<SingleChainMCMC>(pt_subchain,kernel);
 
   samps = subchain->Run(currentState->state);
+  //std::cout << "Level " << level << std::endl;
+  //std::cout << subchain->NumSamps() << std::endl;
+  //std::vector<int> numberOfSamples;
+  numberOfSamplesPerLevel[level-1] += subchain->NumSamps();
 
   return samps->back();
 }

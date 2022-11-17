@@ -8,7 +8,6 @@
 
 namespace muq {
   namespace SamplingAlgorithms {
-
     /** @brief MLDA proposal.
         @details
      */

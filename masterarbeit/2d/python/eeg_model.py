@@ -57,8 +57,8 @@ class EEGModelLeadfield(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, level):
-        if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
-            return -1e20
+        #if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
+        #    return -1e20
 
         # find next node to theta on the mesh and select the according leadfield
         points = np.array(self.mesh[level].points[:,0:2])
@@ -167,9 +167,11 @@ class EEGModelTransfer(umbridge.Model):
                 }
                 self.tissue_probs[l] = mesh.gray_probs
 
-            config_source = config[config[level]["SourceModel"]] if "SourceModel" in config[level] else config[config["GeneralLevelConfig"]["SourceModel"]]   
+            config_source = config[config[l]["SourceModel"]] if "SourceModel" in config[l] else config[config["GeneralLevelConfig"]["SourceModel"]]   
+            print(l)
+            print(config_source)
 
-            if config_source["type"] =="Venant":
+            if config_source["type"] =="venant":
                 source_model_config = {
                     'type' : config_source["type"],
                     'numberOfMoments' : config_source["numberOfMoments"],
@@ -180,7 +182,7 @@ class EEGModelTransfer(umbridge.Model):
                     'restrict' : bool(config_source["restrict"]),
                     'initialization' : config_source["initialization"],
                 }
-            elif config_source["type"] =="Subtraction":
+            elif config_source["type"] =="subtraction":
                 source_model_config = {
                     "type": "subtraction",
                     "intorderadd" : 2,
@@ -212,7 +214,12 @@ class EEGModelTransfer(umbridge.Model):
         self.center = center
         self.dim = len(center)
 
-        
+        self.domain_x_min = config["Setup"]["Domain_x_Min"]
+        self.domain_x_max = config["Setup"]["Domain_x_Max"]
+        self.domain_y_min = config["Setup"]["Domain_y_Min"]
+        self.domain_y_max = config["Setup"]["Domain_y_Max"]
+
+        print(self.config)
         #tissue_prob_map = loadmat('/home/anne/Masterarbeit/masterarbeit/2d//data/T1SliceAnne.mat')
         #self.gray_prob = tissue_prob_map['T1Slice']['gray'][0][0]
 
@@ -227,7 +234,9 @@ class EEGModelTransfer(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, level):
-        if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
+        #if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
+        #    return -1e20
+        if(theta[0]<self.domain_x_min or theta[0]>self.domain_x_max or theta[1]<self.domain_y_min  or theta[1]>self.domain_y_max):
             return -1e20
 
         if self.mode=='Radial':
@@ -236,22 +245,17 @@ class EEGModelTransfer(umbridge.Model):
         else:
             next_dipole = utility_functions.get_dipole(theta[0:self.dim], self.center, theta[self.dim])
 
-        #next_dipole = utility_functions.get_radial_dipole(theta, self.center)
-
         b = self.meg_drivers[level].applyEEGTransfer(self.transfer_matrix[level],[next_dipole],self.config[level])[0]
 
         # calculate the posterior as a normal distribution
         c = self.mesh[level].find_next_center(theta)
         tissue_prob = self.tissue_probs[level][int(c[0]+self.mesh[level].cells_per_dim*c[1])]
         #tissue_prob = self.mesh[level]['gray_probs'][utility_functions.find_next_node(self.mesh[level]['centers'],theta[0:2])]
-        posterior = tissue_prob*((1/(2*self.sigma[level]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level]**2))*(np.linalg.norm(np.array(self.b_ref[level])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level]), 2))**2)
+        w = 1e-3 # level dependent
+        posterior = ((1-w)*tissue_prob+w)*((1/(2*self.sigma[level]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level]**2))*(np.linalg.norm(np.array(self.b_ref[level])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level]), 2))**2)
 
         if posterior==0:
            return -1e20
-
-        '''if(level=="Level3"):
-            print(theta)
-            print(posterior)'''
 
         return np.log(posterior)
         
@@ -322,11 +326,12 @@ if __name__ == "__main__":
         m = len(np.load(path_electrodes[level])["arr_0"])
         b_ref[level] = np.zeros(m)
 
+        config_source = config[config[level]["SourceModel"]] if "SourceModel" in config[level] else config[config["GeneralLevelConfig"]["SourceModel"]]   
         if relative_noise==0:
-            b_ref[level] = utility_functions.calc_sensor_values(s_ref, path_electrodes[level], mesh_types[level], path_meshs[level], conductivities)
+            b_ref[level] = utility_functions.calc_sensor_values(s_ref, path_electrodes[level], mesh_types[level], path_meshs[level], conductivities, config_source)
             sigma_0 = 0.001*np.amax(np.absolute(b_ref[level]))
         else:
-            b_ref[level], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes[level], mesh_types[level], path_meshs[level], conductivities, relative_noise)
+            b_ref[level], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref, path_electrodes[level], mesh_types[level], path_meshs[level], conductivities, config_source, relative_noise)
 
         sigma[level] = var_factor[level]*sigma_0
 
