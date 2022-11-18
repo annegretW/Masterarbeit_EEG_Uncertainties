@@ -94,7 +94,7 @@ def get_electrodes(electrodes_path, mesh_path):
     print(len(electrodes))
     np.savez_compressed(electrodes_path, electrodes)
 
-def calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config_source):
+def calc_sensor_values(s_ref, transfer_matrix, mesh_path, conductivities, config_source):
     #b_ref = analytical_solution(s_ref, mesh_path, tensors_path, electrodes_path)
 
     if config_source["type"] =="venant":
@@ -126,14 +126,49 @@ def calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config
         'subtract_mean' : True
     }
 
-    T, meg_driver = create_transfer_matrix(mesh_path, conductivities, electrodes_path)
+    #transfer_matrix, meg_driver = create_transfer_matrix(mesh_path, conductivities, electrodes_path)
+    if mesh_path == "msh":
+        driver_config = {
+            'type' : 'fitted',
+            'solver_type' : 'cg',
+            'element_type' : 'tetrahedron',
+            'volume_conductor': {
+                'grid.filename' : mesh_path, 
+                'tensors.filename' : conductivities
+                },
+            'post_process' : 'true', 
+            'subtract_mean' : 'true'
+            }
+
+    else:
+        mesh = np.load(mesh_path)
+        driver_config = {
+            'type' : 'fitted',
+            'solver_type' : 'cg',
+            'element_type' : 'hexahedron',
+            'volume_conductor' : {
+                'grid' : {
+                    'elements' : mesh['elements'].tolist(),
+                    'nodes' : mesh['nodes'].tolist()
+                },
+                'tensors' : {
+                    'labels' : mesh['labels'].tolist(),
+                    'conductivities' : conductivities
+                },
+            },
+            'post_process' : 'true', 
+            'subtract_mean' : 'true'
+        }
+
+    meg_driver = dp.MEEGDriver2d(driver_config)
+    T = np.load(transfer_matrix)['arr_0']
     b_ref = meg_driver.applyEEGTransfer(T,[s_ref],config)[0][0]
 
     return b_ref
 
 
-def calc_disturbed_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config_source, relative_noise):
-    b_ref = calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config_source)
+def calc_disturbed_sensor_values(s_ref, transfer_matrix, mesh_path, conductivities, config_source, relative_noise):
+    b_ref = calc_sensor_values(s_ref, transfer_matrix, mesh_path, conductivities, config_source)
 
     # Disturb sensor values
     sigma = relative_noise*np.amax(np.absolute(b_ref))

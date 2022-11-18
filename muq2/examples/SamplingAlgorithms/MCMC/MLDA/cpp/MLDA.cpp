@@ -159,7 +159,7 @@ void MH(pt::ptree config){
 
         json um_config;
         um_config["level"] = v.second.data();
-        um_config["chain"] = std::to_string(k);
+        um_config["chain"] = k;
         std::shared_ptr<SamplingProblem> sampling_problem = std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config));
         
         auto problem = sampling_problem;

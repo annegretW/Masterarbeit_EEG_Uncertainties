@@ -49,7 +49,7 @@
         "Reference" : {
             "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
             "SourceModel" : "PartialIntegration",
-            "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
+            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_64.npz"
         }
     },
     "Level1_P" : {

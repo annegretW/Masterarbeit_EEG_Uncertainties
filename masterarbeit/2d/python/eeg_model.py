@@ -268,8 +268,13 @@ if __name__ == "__main__":
     s_ref = {}
     for c in range(chains):
         if config["Setup"]["Dipole"] == "Random":
-            position = (utility_functions.get_random(config["Geometry"]["Domain_x_Min"],config["Geometry"]["Domain_x_Max"]),
+            mesh_ref = np.load(config["GeneralLevelConfig"]["Reference"]["Mesh"] if "Reference" in config["GeneralLevelConfig"] else config[config["Sampling"]["Levels"][-1]]["Reference"]["Mesh"])
+            while(True):
+                position = (utility_functions.get_random(config["Geometry"]["Domain_x_Min"],config["Geometry"]["Domain_x_Max"]),
                         utility_functions.get_random(config["Geometry"]["Domain_y_Min"],config["Geometry"]["Domain_y_Max"]))
+                center_ref = utility_functions.find_next_center(mesh_ref,'hex',position)
+                if(mesh_ref['gray_probs'][int(center_ref[0]+mesh_ref['cells_per_dim']*center_ref[1])]>0.5):
+                    break
         else:
             position = (config["ModelConfig"]["Dipole"]["Position"]["x"],config["ModelConfig"]["Dipole"]["Position"]["y"])
 
@@ -281,10 +286,10 @@ if __name__ == "__main__":
                 rho = utility_functions.get_random(0,2*math.pi)
             else:
                 rho = config["ModelConfig"]["Dipole"]["Orientation"]["rho"]
+
+            print("Dipole:")
+            print(utility_functions.get_dipole(position,center,rho))
             s_ref[c] = utility_functions.get_dipole(position,center,rho)
-    
-    print("Dipole:")
-    print(s_ref)
 
     ##### COMPUTE REFERENCE SENSOR VALUES #####
     # Read configs yielding for all levels
@@ -294,12 +299,12 @@ if __name__ == "__main__":
         b_ref_general = {}
         sigma_0_general = {}
         for c in range(chains):
-            electrodes = general_level_config["Reference"]["Electrodes"]
+            transfer_matrix = general_level_config["Reference"]["TransferMatrix"]
             mesh = general_level_config["Reference"]["Mesh"]
             source_model = general_level_config["Reference"]["SourceModel"]
             config_source = config[source_model]
 
-            b_ref_general[c], sigma_0_general[c] = utility_functions.calc_disturbed_sensor_values(s_ref[c], electrodes, mesh, conductivities, config_source, relative_noise)
+            b_ref_general[c], sigma_0_general[c] = utility_functions.calc_disturbed_sensor_values(s_ref[c], transfer_matrix, mesh, conductivities, config_source, relative_noise)
 
     ##### SET LEVEL DEPENDENT CONFIGS #####
     # Initialize dictionairies
@@ -333,9 +338,8 @@ if __name__ == "__main__":
         # Compute reference sensor values for the level or use the same for each level
         if "Reference" in level_config:
             for c in range(chains):
-                b_ref[level][c] = np.zeros(m)
                 config_source = config[config[level]["SourceModel"]] if "SourceModel" in config[level] else config[config["GeneralLevelConfig"]["SourceModel"]]   
-                b_ref[level][c], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref[c], path_electrodes[level], mesh_types[level], path_meshs[level], conductivities, config_source, relative_noise)
+                b_ref[level][c], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref[c], path_matrices[level], mesh_types[level], path_meshs[level], conductivities, config_source, relative_noise)
                 sigma[level][c] = var_factor[level]*sigma_0
         else:
             b_ref[level] = b_ref_general
