@@ -1,6 +1,7 @@
 import numpy as np
 from leadfield import create_leadfield, create_transfer_matrix
 import math
+import random
 import meshio
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
@@ -93,19 +94,29 @@ def get_electrodes(electrodes_path, mesh_path):
     print(len(electrodes))
     np.savez_compressed(electrodes_path, electrodes)
 
-def calc_sensor_values(s_ref, electrodes_path, mesh_type, mesh_path, conductivities):
-    print("s_ref = %s \n" % s_ref)
+def calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config_source):
     #b_ref = analytical_solution(s_ref, mesh_path, tensors_path, electrodes_path)
 
-    source_model_config = {
-        'type' : 'venant',
-        'numberOfMoments' : 3,
-        'referenceLength' : 20,
-        'weightingExponent' : 1,
-        'relaxationFactor' : 1e-6,
-        'mixedMoments' : True,
-        'restrict' : True,
-        'initialization' : 'closest_vertex'
+    if config_source["type"] =="venant":
+        source_model_config = {
+            'type' : config_source["type"],
+            'numberOfMoments' : config_source["numberOfMoments"],
+            'referenceLength' : config_source["referenceLength"],
+            'weightingExponent' : config_source["weightingExponent"],
+            'relaxationFactor' : config_source["relaxationFactor"],
+            'mixedMoments' : bool(config_source["mixedMoments"]),
+            'restrict' : bool(config_source["restrict"]),
+            'initialization' : config_source["initialization"],
+        }
+    elif config_source["type"] =="subtraction":
+        source_model_config = {
+            "type": "subtraction",
+            "intorderadd" : 2,
+            "intorderadd_lb" : 2
+        }
+    else:
+        source_model_config = {
+            "type": "partial_integration"
         }
 
     config = {
@@ -115,21 +126,22 @@ def calc_sensor_values(s_ref, electrodes_path, mesh_type, mesh_path, conductivit
         'subtract_mean' : True
     }
 
-    T, meg_driver = create_transfer_matrix(mesh_type, mesh_path, conductivities, electrodes_path)
+    T, meg_driver = create_transfer_matrix(mesh_path, conductivities, electrodes_path)
     b_ref = meg_driver.applyEEGTransfer(T,[s_ref],config)[0][0]
 
     return b_ref
 
 
-def calc_disturbed_sensor_values(s_ref, electrodes_path, mesh_type, mesh_path, conductivities, relative_noise):
-    b_ref = calc_sensor_values(s_ref, electrodes_path, mesh_type, mesh_path, conductivities)
+def calc_disturbed_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config_source, relative_noise):
+    b_ref = calc_sensor_values(s_ref, electrodes_path, mesh_path, conductivities, config_source)
 
     # Disturb sensor values
     sigma = relative_noise*np.amax(np.absolute(b_ref))
     print("sigma = " + str(sigma))
     b_ref = np.random.normal(b_ref, sigma)
-    #print("Disturbed measurement values at the electrodes:")
-    #print(b_ref) 
+
+    if relative_noise==0:
+        sigma = 0.001*np.amax(np.absolute(b_ref))
 
     return b_ref, sigma
 
@@ -139,3 +151,13 @@ def find_next_node(nodes, point):
     index = np.linalg.norm(np.absolute(nodes - point), 2, axis=1).argmin()
     #index = np.linalg.norm(np.abs(nodes - point),axis=1).argmin()
     return index
+
+def find_next_center(mesh, mesh_type, point):
+    if mesh_type == "hex":
+        p = np.array(point)
+        return np.divmod(p, mesh['cell_size'])[0]
+    else:
+        return find_next_node(mesh['centers'], point)
+
+def get_random(lower, upper):
+    return random.random()*(upper-lower)+lower

@@ -87,11 +87,12 @@ class StructuredMesh():
         self.centers = centers
 
         if path != None:
-            np.savez_compressed(path, elements=self.elements, centers=self.centers, nodes=self.nodes, labels=self.labels, gray_probs=self.gray_probs)
+            np.savez_compressed(path, cells_per_dim=self.cells_per_dim, cell_size=self.cell_size, elements=self.elements, centers=self.centers, nodes=self.nodes, labels=self.labels, gray_probs=self.gray_probs)
 
         print("\nCreated new mesh with \n " + str(len(self.nodes)) + " nodes \n " + str(len(self.elements)) + " elements\n")
 
     def find_next_center(self, point):
-        p = np.array(point) + self.cell_size/2
+        #p = np.array(point) + self.cell_size/2
+        p = np.array(point)
         return np.divmod(p, self.cell_size)[0]
         

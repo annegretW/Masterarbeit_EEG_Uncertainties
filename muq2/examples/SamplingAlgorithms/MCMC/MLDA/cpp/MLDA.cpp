@@ -86,6 +86,7 @@ void MLDA(pt::ptree config){
 
           json um_config;
           um_config["level"] = v.second.data();
+          um_config["chain"] = k;
           sampling_problems.push_back(std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config)));
 
           if(level == 0){
@@ -123,22 +124,22 @@ void MLDA(pt::ptree config){
       auto chain = std::make_shared<SingleChainMCMC>(pt,kernel);
 
       Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
-      if (config.get<int>("Geometry.Dim") == 2) {
-          if (config.get<std::string>("Setup.Start") == "Random"){
-            startPt << getRandom(0,256), getRandom(0,256);
+        if (config.get<int>("Geometry.Dim") == 2) {
+            if (config.get<std::string>("Setup.Start") == "Random"){
+              startPt << getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max"));
+            }
+            else {
+              startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
+            }
           }
-          else {
-            startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
+        else {
+            if (config.get<std::string>("Setup.Start") == "Random"){
+              startPt <<  getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max")), getRandom(0,2*M_PI);
+            }
+            else {
+              startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");
+            }
           }
-        }
-      else {
-          if (config.get<std::string>("Setup.Start") == "Random"){
-            startPt << getRandom(0,256), getRandom(0,256), getRandom(0,2*M_PI);
-          }
-          else {
-            startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");
-          }
-        }
       
       std::cout << "Start point:" << std::endl;
       std::cout << startPt << std::endl;
@@ -158,6 +159,7 @@ void MH(pt::ptree config){
 
         json um_config;
         um_config["level"] = v.second.data();
+        um_config["chain"] = std::to_string(k);
         std::shared_ptr<SamplingProblem> sampling_problem = std::make_shared<SamplingProblem>(std::make_shared<UMBridgeModPiece>("localhost:4243", um_config));
         
         auto problem = sampling_problem;
@@ -180,7 +182,7 @@ void MH(pt::ptree config){
         Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
         if (config.get<int>("Geometry.Dim") == 2) {
             if (config.get<std::string>("Setup.Start") == "Random"){
-              startPt << getRandom(config.get<int>("Setup.Domain_x_Min"),config.get<int>("Setup.Domain_x_Max")), getRandom(config.get<int>("Setup.Domain_y_Min"),config.get<int>("Setup.Domain_y_Max"));
+              startPt << getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max"));
             }
             else {
               startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
@@ -188,7 +190,7 @@ void MH(pt::ptree config){
           }
         else {
             if (config.get<std::string>("Setup.Start") == "Random"){
-              startPt <<  getRandom(config.get<int>("Setup.Domain_x_Min"),config.get<int>("Setup.Domain_x_Max")), getRandom(config.get<int>("Setup.Domain_y_Min"),config.get<int>("Setup.Domain_y_Max")), getRandom(0,2*M_PI);
+              startPt <<  getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max")), getRandom(0,2*M_PI);
             }
             else {
               startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");

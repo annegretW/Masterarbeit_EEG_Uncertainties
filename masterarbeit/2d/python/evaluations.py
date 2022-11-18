@@ -84,9 +84,9 @@ def set_ax(axis, color='None'):
         axis.set_ylim(35,219)
         axis.set_aspect(1)
 
-def draw_point(axis, point, alpha=1):
+def draw_point(axis, point, alpha=1, facecolor="red"):
         axis.add_artist(
-                pt.Circle(point,3,facecolor="red",alpha=alpha))
+                pt.Circle(point,3,facecolor=facecolor,alpha=alpha))
 
 def diagnostics(samples):
         n = len(samples)

@@ -93,9 +93,11 @@ if __name__ == "__main__":
     for level in levels:
         startTime = time.time()
 
-        for i in range(100000):    
+        samples = 10000
+        for i in range(samples):    
             theta = np.array([np.random.uniform(low=0, high=255),np.random.uniform(low=0, high=255),np.random.uniform(low=0.0, high=2*math.pi)])
             testmodel.posterior(theta, level)
 
         executionTime = (time.time() - startTime)
         print('Execution time on ' + level + ' in seconds: ' + str(executionTime))
+        print('Execution time on ' + level + ' in seconds per sample: ' + str(executionTime/samples))
