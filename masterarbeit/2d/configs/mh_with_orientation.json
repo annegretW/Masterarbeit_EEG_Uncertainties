@@ -42,6 +42,12 @@
             "y" : 128,
             "rho" : 0
         },
+        "StartDomain" : {   
+            "x_Min": 30,
+            "x_Max": 200,
+            "y_Min": 70,
+            "y_Max": 220
+        },
         "Levels" : ["Level3_V"]
     },
     "GeneralLevelConfig" : {
@@ -61,7 +67,7 @@
         "SourceModel" : "PartialIntegration"
     },
     "Level3_V" : {
-        "ProposalVariance" : [16, 16, 0.2],
+        "ProposalVariance" : [32, 32, 0.2],
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",

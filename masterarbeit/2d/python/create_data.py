@@ -24,7 +24,6 @@ if __name__ == "__main__":
         mesh_path = level_config["Mesh"] if "Mesh" in level_config else general_level_config["Mesh"]   
         mesh_type = level_config["MeshType"] if "MeshType" in level_config else general_level_config["MeshType"]   
 
-
         # Generate electrode positions if not already existing  
         if not exists(electrodes_path):
             get_electrodes(electrodes_path,mesh_path)

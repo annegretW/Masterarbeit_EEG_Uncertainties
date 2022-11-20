@@ -34,15 +34,21 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "samples_mlda_01",
-        "NumSamples" : 50,
-        "BurnIn" : 0,
+        "ResultFile" : "mlda",
+        "NumSamples" : 10000,
+        "BurnIn" : 1000,
         "StartPoint" : {
             "x" : 128,
             "y" : 128,
             "rho" : 0
         },
-        "Levels" : ["Level1_P","Level1_V","Level1_S"]
+        "StartDomain" : {   
+            "x_Min": 30,
+            "x_Max": 200,
+            "y_Min": 70,
+            "y_Max": 220
+        },
+        "Levels" : ["Level1_V","Level2_V","Level3_V"]
     },
     "GeneralLevelConfig" : {
         "MeshType" : "hex",
@@ -79,7 +85,7 @@
         "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
     },
     "Level1_V" : {
-        "ProposalVariance" : [16, 16, 0.2],
+        "ProposalVariance" : [8, 8, 0.1],
         "Subsampling" : 7, 
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",

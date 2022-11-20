@@ -126,7 +126,7 @@ void MLDA(pt::ptree config){
       Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
         if (config.get<int>("Geometry.Dim") == 2) {
             if (config.get<std::string>("Setup.Start") == "Random"){
-              startPt << getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max"));
+              startPt << getRandom(config.get<int>("Sampling.StartDomain.x_Min"),config.get<int>("Sampling.StartDomain.x_Max")), getRandom(config.get<int>("Sampling.StartDomain.y_Min"),config.get<int>("Sampling.StartDomain.y_Max"));
             }
             else {
               startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
@@ -134,7 +134,7 @@ void MLDA(pt::ptree config){
           }
         else {
             if (config.get<std::string>("Setup.Start") == "Random"){
-              startPt <<  getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max")), getRandom(0,2*M_PI);
+              startPt <<  getRandom(config.get<int>("Sampling.StartDomain.x_Min"),config.get<int>("Sampling.StartDomain.x_Max")), getRandom(config.get<int>("Sampling.StartDomain.y_Min"),config.get<int>("Sampling.StartDomain.y_Max")), getRandom(0,2*M_PI);
             }
             else {
               startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");
@@ -182,7 +182,7 @@ void MH(pt::ptree config){
         Eigen::VectorXd startPt(config.get<int>("Geometry.Dim"));
         if (config.get<int>("Geometry.Dim") == 2) {
             if (config.get<std::string>("Setup.Start") == "Random"){
-              startPt << getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max"));
+              startPt << getRandom(config.get<int>("Sampling.StartDomain.x_Min"),config.get<int>("Sampling.StartDomain.x_Max")), getRandom(config.get<int>("Sampling.StartDomain.y_Min"),config.get<int>("Sampling.StartDomain.y_Max"));
             }
             else {
               startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y");
@@ -190,7 +190,7 @@ void MH(pt::ptree config){
           }
         else {
             if (config.get<std::string>("Setup.Start") == "Random"){
-              startPt <<  getRandom(config.get<int>("Geometry.Domain_x_Min"),config.get<int>("Geometry.Domain_x_Max")), getRandom(config.get<int>("Geometry.Domain_y_Min"),config.get<int>("Geometry.Domain_y_Max")), getRandom(0,2*M_PI);
+              startPt <<  getRandom(config.get<int>("Sampling.StartDomain.x_Min"),config.get<int>("Sampling.StartDomain.x_Max")), getRandom(config.get<int>("Sampling.StartDomain.y_Min"),config.get<int>("Sampling.StartDomain.y_Max")), getRandom(0,2*M_PI);
             }
             else {
               startPt << config.get<int>("Sampling.StartPoint.x"), config.get<int>("Sampling.StartPoint.y"), config.get<double>("Sampling.StartPoint.rho");

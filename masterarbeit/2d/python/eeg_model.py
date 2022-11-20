@@ -214,7 +214,7 @@ class EEGModelTransfer(umbridge.Model):
         #if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
         #    return -1e20
         if(theta[0]<self.domain_x_min or theta[0]>self.domain_x_max or theta[1]<self.domain_y_min  or theta[1]>self.domain_y_max):
-            return -1e20
+            return -1e50
 
         if self.mode=='Radial':
             next_dipole = utility_functions.get_radial_dipole(theta[0:2], self.center)
@@ -232,7 +232,7 @@ class EEGModelTransfer(umbridge.Model):
         posterior = ((1-w)*tissue_prob+w)*((1/(2*self.sigma[level][chain]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level][chain]**2))*(np.linalg.norm(np.array(self.b_ref[level][chain])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level][chain]), 2))**2)
 
         if posterior==0:
-           return -1e20
+           return -1e50
 
         return np.log(posterior)
         
