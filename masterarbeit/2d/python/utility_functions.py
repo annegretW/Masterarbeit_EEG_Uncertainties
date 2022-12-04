@@ -27,9 +27,9 @@ def save_leadfield_matrix(electrodes_path, conductivities_path, mesh_path, path_
     np.savez_compressed(path_leadfield, leadfield_matrix)
 
 
-def save_transfer_matrix(electrodes_path, conductivities_path, mesh_type, mesh_path, path_transfer):
+def save_transfer_matrix(electrodes_path, conductivities_path, mesh_path, path_transfer):
     # generate transfer matrix
-    transfer_matrix = create_transfer_matrix(mesh_type, mesh_path, conductivities_path, electrodes_path)[0]
+    transfer_matrix = create_transfer_matrix(mesh_path, conductivities_path, electrodes_path)[0]
     
     # save transfer matrix
     np.savez_compressed(path_transfer, transfer_matrix)
@@ -85,7 +85,7 @@ def get_dipole(point, center, rho, phi=0):
     else:
         return dp.Dipole3d(point, moment)
 
-def get_electrodes(electrodes_path, mesh_path):
+def get_electrodes_sphere_model(electrodes_path, mesh_path):
     mesh = meshio.read(mesh_path)
     electrodes = []
     for node in mesh.points:
@@ -162,8 +162,10 @@ def calc_sensor_values(s_ref, transfer_matrix, mesh_path, conductivities, config
 
     meg_driver = dp.MEEGDriver2d(driver_config)
     T = np.load(transfer_matrix)['arr_0']
+
     b_ref = meg_driver.applyEEGTransfer(T,[s_ref],config)[0][0]
 
+    print(s_ref)
     return b_ref
 
 

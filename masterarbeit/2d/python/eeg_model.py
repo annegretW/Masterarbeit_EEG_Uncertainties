@@ -6,9 +6,6 @@ import utility_functions
 import meshio
 import math
 import json
-import structured_mesh as msh
-
-from scipy.io import loadmat
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
 
@@ -104,9 +101,11 @@ class EEGModelTransfer(umbridge.Model):
         self.m = {}
         self.tissue_probs = {}
         self.config = {}
+        self.num_samples = {}
 
         # iterate through all levels
         for l in levels:
+            self.num_samples[l] = np.zeros(config["Setup"]["Chains"])
             self.transfer_matrix[l] = np.load(transfer_path_list[l])['arr_0']
             
             if mesh_list[l].split(".")[-1] == "msh":
@@ -211,10 +210,12 @@ class EEGModelTransfer(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, chain, level):
+        self.num_samples[level][chain] += 1
+
         #if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
         #    return -1e20
         if(theta[0]<self.domain_x_min or theta[0]>self.domain_x_max or theta[1]<self.domain_y_min  or theta[1]>self.domain_y_max):
-            return -1e50
+            return -1e100
 
         if self.mode=='Radial':
             next_dipole = utility_functions.get_radial_dipole(theta[0:2], self.center)
@@ -222,17 +223,20 @@ class EEGModelTransfer(umbridge.Model):
         else:
             next_dipole = utility_functions.get_dipole(theta[0:2], self.center, theta[2])
 
+        #print(self.config[level])
         b = self.meg_drivers[level].applyEEGTransfer(self.transfer_matrix[level],[next_dipole],self.config[level])[0]
-
+        #print(theta)
+        #print(b)
+        #print("_______________________________________________________________________________")
         # calculate the posterior as a normal distribution
         c = utility_functions.find_next_center(self.mesh[level],self.mesh_type[level],theta)
         tissue_prob = self.tissue_probs[level][int(c[0]+self.mesh[level]['cells_per_dim']*c[1])]
-        #tissue_prob = self.mesh[level]['gray_probs'][utility_functions.find_next_node(self.mesh[level]['centers'],theta[0:2])]
+        #tissue_prob = 1
         w = 1e-3 # level dependent
         posterior = ((1-w)*tissue_prob+w)*((1/(2*self.sigma[level][chain]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level][chain]**2))*(np.linalg.norm(np.array(self.b_ref[level][chain])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level][chain]), 2))**2)
 
         if posterior==0:
-           return -1e50
+           return -1e100
 
         return np.log(posterior)
         
@@ -261,14 +265,14 @@ if __name__ == "__main__":
     chains = config["Setup"]["Chains"]
 
     # Set type
-    dipole_type = config["ModelConfig"]["Dipole"]["Type"]
+    dipole_type = config["ModelConfig"]["DipoleType"]
 
     ##### SET DIPOLE #####
     # Dipole position is either read from the config or generated randomly
     s_ref = {}
     for c in range(chains):
         if config["Setup"]["Dipole"] == "Random":
-            mesh_ref = np.load(config["GeneralLevelConfig"]["Reference"]["Mesh"] if "Reference" in config["GeneralLevelConfig"] else config[config["Sampling"]["Levels"][-1]]["Reference"]["Mesh"])
+            mesh_ref = np.load(config["GeneralLevelConfig"]["Reference"]["Mesh"] if "Reference" in config["GeneralLevelConfig"] else config[config["Sampling"]["Levels"][-1]]["Mesh"])
             while(True):
                 position = (utility_functions.get_random(config["Geometry"]["Domain_x_Min"],config["Geometry"]["Domain_x_Max"]),
                         utility_functions.get_random(config["Geometry"]["Domain_y_Min"],config["Geometry"]["Domain_y_Max"]))
@@ -276,7 +280,7 @@ if __name__ == "__main__":
                 if(mesh_ref['gray_probs'][int(center_ref[0]+mesh_ref['cells_per_dim']*center_ref[1])]>0.5):
                     break
         else:
-            position = (config["ModelConfig"]["Dipole"]["Position"]["x"],config["ModelConfig"]["Dipole"]["Position"]["y"])
+            position = (config["ModelConfig"]["Dipoles"][c][0],config["ModelConfig"]["Dipoles"][c][1])
 
         # Dipole orientation is either radial or given by the config or generated randomly
         if dipole_type == 'Radial':
@@ -285,7 +289,7 @@ if __name__ == "__main__":
             if config["Setup"]["Dipole"] == "Random":
                 rho = utility_functions.get_random(0,2*math.pi)
             else:
-                rho = config["ModelConfig"]["Dipole"]["Orientation"]["rho"]
+                rho = config["ModelConfig"]["Dipoles"][c][2]
 
             print("Dipole:")
             print(utility_functions.get_dipole(position,center,rho))
@@ -303,7 +307,6 @@ if __name__ == "__main__":
             mesh = general_level_config["Reference"]["Mesh"]
             source_model = general_level_config["Reference"]["SourceModel"]
             config_source = config[source_model]
-
             b_ref_general[c], sigma_0_general[c] = utility_functions.calc_disturbed_sensor_values(s_ref[c], transfer_matrix, mesh, conductivities, config_source, relative_noise)
 
     ##### SET LEVEL DEPENDENT CONFIGS #####
@@ -336,21 +339,29 @@ if __name__ == "__main__":
         m = len(np.load(path_electrodes[level])["arr_0"])
 
         # Compute reference sensor values for the level or use the same for each level
-        if "Reference" in level_config:
-            for c in range(chains):
-                config_source = config[config[level]["SourceModel"]] if "SourceModel" in config[level] else config[config["GeneralLevelConfig"]["SourceModel"]]   
-                b_ref[level][c], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref[c], path_matrices[level], mesh_types[level], path_meshs[level], conductivities, config_source, relative_noise)
-                sigma[level][c] = var_factor[level]*sigma_0
-        else:
+        if "Reference" in general_level_config:
             b_ref[level] = b_ref_general
             sigma[level] = sigma_0_general
+        else:
+            b_ref_c = {}
+            sigma_c = {}
+            for c in range(chains):
+                config_source = config[config[level]["SourceModel"]]   
+                b_ref_c[c], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref[c], path_matrices[level], path_meshs[level], conductivities, config_source, relative_noise)
+                sigma_c[c] = var_factor[level]*sigma_0
+            b_ref[level] = b_ref_c
+            sigma[level] = sigma_c
 
     ##### CREATE EEG MODEL #####
     # Either transfer matrix or leadfield matrix is used in the model
+    print(b_ref) 
+
     if model=='T':
         testmodel = EEGModelTransfer(config, levels, b_ref, sigma, path_matrices, mesh_types, path_meshs, conductivities, center, dipole_type)
     elif model == 'L':
-        testmodel = EEGModelLeadfield(levels, b_ref, sigma, path_matrices, path_meshs)
+        testmodel = EEGModelLeadfield(config, levels, b_ref, sigma, path_matrices, mesh_types, path_meshs, conductivities, center, dipole_type)
 
     # Send model via localhost
     umbridge.serve_model(testmodel, 4243)
+
+    print(testmodel.num_samples)

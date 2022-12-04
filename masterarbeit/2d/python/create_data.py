@@ -1,7 +1,7 @@
 from os.path import exists
 import sys
 import json
-from utility_functions import get_electrodes, save_leadfield_matrix, save_transfer_matrix
+from utility_functions import save_leadfield_matrix, save_transfer_matrix
 
 if __name__ == "__main__":
     # Get path to config file
@@ -22,11 +22,6 @@ if __name__ == "__main__":
         level_config = config[level]
         electrodes_path = level_config["Electrodes"] if "Electrodes" in level_config else general_level_config["Electrodes"]     
         mesh_path = level_config["Mesh"] if "Mesh" in level_config else general_level_config["Mesh"]   
-        mesh_type = level_config["MeshType"] if "MeshType" in level_config else general_level_config["MeshType"]   
-
-        # Generate electrode positions if not already existing  
-        if not exists(electrodes_path):
-            get_electrodes(electrodes_path,mesh_path)
 
         # Create leadfield matrices if not already existing
         if model=='L':
@@ -45,6 +40,5 @@ if __name__ == "__main__":
                 save_transfer_matrix(
                     electrodes_path, 
                     conductivities_path, 
-                    mesh_type,
                     mesh_path, 
                     matrix_path)

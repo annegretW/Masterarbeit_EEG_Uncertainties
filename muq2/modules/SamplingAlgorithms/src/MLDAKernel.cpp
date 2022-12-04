@@ -11,7 +11,6 @@ std::vector<std::shared_ptr<SamplingState>> MLDAKernel::Step(unsigned int const 
 
   assert(proposal);
 
-
   double prev_logtarget;
   if(prevState->HasMeta("LogTarget") && (prevState->HasMeta("QOI") || problem->numBlocksQOI == 0) && !reeval ){
     prev_logtarget = AnyCast(prevState->meta["LogTarget"]);
@@ -35,6 +34,7 @@ std::vector<std::shared_ptr<SamplingState>> MLDAKernel::Step(unsigned int const 
 
   // accept/reject
   numCalls++;
+  //std::cout << numCalls << std::endl;
   
   if(0){
   std::cout << std::to_string(coarse_prev_logtarget) << std::endl;

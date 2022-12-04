@@ -49,6 +49,7 @@ std::shared_ptr<SamplingState> MHProposal::Sample(std::shared_ptr<SamplingState>
   Eigen::VectorXd const& xc = currentState->state.at(blockInd);
 
   Eigen::VectorXd prop = proposal->Sample();
+  // std::cout << xc + prop << std::endl;
   props.at(blockInd) = xc + prop;
 
   // store the new state in the output

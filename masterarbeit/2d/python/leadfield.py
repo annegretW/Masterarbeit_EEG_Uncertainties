@@ -1,4 +1,3 @@
-import structured_mesh as msh
 import numpy as np
 
 duneuropy_path='/home/anne/Masterarbeit/duneuro/build-release/duneuro-py/src'
@@ -8,19 +7,39 @@ sys.path.append(duneuropy_path)
 import duneuropy as dp
 
 
-def create_leadfield(mesh_path, tensors_path, electrodes_path, dipoles):
+def create_leadfield(mesh_path, conductivities, electrodes_path, dipoles):
     # Create MEG driver
-    config = {
-        'type' : 'fitted',
-        'solver_type' : 'cg',
-        'element_type' : 'tetrahedron',
-        'volume_conductor': {
-            'grid.filename' : mesh_path, 
-            'tensors.filename' : tensors_path
-         },
-         'post_process' : 'true', 
-         'subtract_mean' : 'true'
-    }
+    if mesh_path.split(".")[-1] == "msh":
+        config = {
+            'type' : 'fitted',
+            'solver_type' : 'cg',
+            'element_type' : 'tetrahedron',
+            'volume_conductor': {
+                'grid.filename' : mesh_path, 
+                'tensors.filename' : conductivities
+                },
+            'post_process' : 'true', 
+            'subtract_mean' : 'true'
+        }
+    else:
+        mesh = np.load(mesh_path)
+        config = {
+            'type' : 'fitted',
+            'solver_type' : 'cg',
+            'element_type' : 'hexahedron',
+            'volume_conductor' : {
+                'grid' : {
+                    'elements' : mesh['elements'].tolist(),
+                    'nodes' : mesh['nodes'].tolist()
+                },
+                'tensors' : {
+                    'labels' : mesh['labels'].tolist(),
+                    'conductivities' : conductivities
+                },
+            },
+            'post_process' : 'true', 
+            'subtract_mean' : 'true'
+        }
     meg_driver = dp.MEEGDriver2d(config)
 
     # Set electrode positions

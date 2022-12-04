@@ -105,6 +105,13 @@ void MLDA(pt::ptree config){
             else{
               ptProposal.put("Subsampling_" + std::to_string(level), level_config.get<int>("Subsampling"));
             }
+
+            if(level_config.get_child_optional("SubchainLength") == boost::none){
+              ptProposal.put("SubchainLength_" + std::to_string(level), general_level_config.get<std::string>("SubchainLength"));
+            }
+            else{
+              ptProposal.put("SubchainLength_" + std::to_string(level), level_config.get<std::string>("SubchainLength"));
+            }
           }
           
           level ++;
