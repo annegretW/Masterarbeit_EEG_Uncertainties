@@ -11,16 +11,16 @@
     "ModelConfig" : {
         "DipoleType" : "Arbitrary",
         "Dipoles" : [
-            [220,85,1.5],
             [185,160,1],
+            [220,85,1.5],
             [130,128,5],
             [85,95,4.5],
-            [160,150,0.5]], 
+            [160,150,0.5]],  
         "RelativeNoise" : 0.005
     },
     "Geometry" : {
         "Dim" : 3,
-        "Conductivities" : [0.0000000001,0.00043,0.00043,0.00001,0.00179,0.00033],
+        "Conductivities" : [0.0000000001,0.00014,0.00033,0.00179,0.00042,0.00033],
         "Center" : {
             "x" : 128,
             "y" : 128
@@ -32,8 +32,8 @@
     },
     "Sampling" : {
         "ResultFile" : "mlda_random_subchain_length",
-        "NumSamples" : 100000,
-        "BurnIn" : 10000,
+        "NumSamples" : 50000,
+        "BurnIn" : 0,
         "StartPoint" : {
             "x" : 128,
             "y" : 128,

@@ -1,21 +1,17 @@
 {
     "Setup" : {
         "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
-        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_01",
+        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mh/",
         "Start" : "Fixed",
         "Dipole" : "Fixed",
-        "Chains" : 5,
+        "Chains" : 1,
         "Method" : "MCMC",
         "Matrix" : "T"
     },
     "ModelConfig" : {
         "DipoleType" : "Arbitrary",
         "Dipoles" : [
-            [185,160,1],
-            [220,85,1.5],
-            [130,128,5],
-            [85,95,4.5],
-            [160,150,0.5]], 
+            [185,160,1]], 
         "RelativeNoise" : 0.005
     },
     "Geometry" : {
@@ -31,9 +27,9 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mh_01",
-        "NumSamples" : 1000000,
-        "BurnIn" : 250000,
+        "ResultFile" : "mh",
+        "NumSamples" : 500000,
+        "BurnIn" : 0,
         "StartPoint" : {
             "x" : 128,
             "y" : 128,

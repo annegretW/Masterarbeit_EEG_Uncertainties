@@ -11,8 +11,8 @@
     "ModelConfig" : {
         "DipoleType" : "Arbitrary",
         "Dipoles" : [
-            [220,85,1.5],
             [185,160,1],
+            [220,85,1.5],
             [130,128,5],
             [85,95,4.5],
             [160,150,0.5]], 
@@ -20,7 +20,7 @@
     },
     "Geometry" : {
         "Dim" : 3,
-        "Conductivities" : [0.0000000001,0.00043,0.00043,0.00001,0.00179,0.00033],
+        "Conductivities" : [0.0000000001,0.00014,0.00033,0.00179,0.00042,0.00033],
         "Center" : {
             "x" : 128,
             "y" : 128
@@ -31,8 +31,8 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mlda_random_subchain_length",
-        "NumSamples" : 100,
+        "ResultFile" : "mlda",
+        "NumSamples" : 50000,
         "BurnIn" : 0,
         "StartPoint" : {
             "x" : 128,
@@ -51,15 +51,6 @@
         "MeshType" : "hex",
         "SubchainLength" : "Fixed"
         },
-    "Level0" : {
-        "ProposalVariance" : [32, 32, 0.8],
-        "Subsampling" : 10,
-        "VarFactor" : 8,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_32.npz",
-        "SourceModel" : "Venant",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_0.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
-    },
     "Level1" : {
         "ProposalVariance" : [32, 32, 0.8],
         "Subsampling" : 7,
@@ -69,19 +60,8 @@
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_1.npz",
         "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
     },
-    "Level2" : {
-        "ProposalVariance" : [32, 32, 1],
-        "Subsampling" : 7,
-        "VarFactor" : 4,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
-        "SourceModel" : "Venant",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_2.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
-    },
     "Level3" : {
-        "ProposalVariance" : [32, 32, 0.1],
-        "Subsampling" : 100000,
-        "VarFactor" : 10000,
+        "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
         "SourceModel" : "Venant",
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_3.npz",

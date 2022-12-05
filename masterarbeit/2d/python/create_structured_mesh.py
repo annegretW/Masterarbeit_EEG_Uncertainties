@@ -63,13 +63,13 @@ def structured_mesh(N, path, x_min, x_max, y_min, y_max, blurr):
             gray_probs[j,i] = min(1,max(0,np.random.normal(gray_probabilities[i,j], blurr)))
             if white_prob[i,j]>0.5: 
                 labels[j,i]=1
-            elif gray_prob[i,j]>0.5: 
+            elif white_prob[i,j]+gray_prob[i,j]>0.5: 
                 labels[j,i]=2
-            elif csf_prob[i,j]>0.5: 
+            elif white_prob[i,j]+gray_prob[i,j]+csf_prob[i,j]>0.5: 
                 labels[j,i]=3
-            elif skull_prob[i,j]>0.5: 
+            elif white_prob[i,j]+gray_prob[i,j]+csf_prob[i,j]+skull_prob[i,j]>0.5: 
                 labels[j,i]=4
-            elif scalp_prob[i,j]>0.5: 
+            elif white_prob[i,j]+gray_prob[i,j]+csf_prob[i,j]+skull_prob[i,j]+scalp_prob[i,j]>0.5: 
                 labels[j,i]=5
             else:
                 labels[j,i]=0
