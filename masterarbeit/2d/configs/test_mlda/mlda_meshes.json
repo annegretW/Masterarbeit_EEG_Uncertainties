@@ -1,0 +1,107 @@
+{
+    "Setup" : {
+        "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
+        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mlda/",
+        "Start" : "Fixed",
+        "Dipole" : "Fixed",
+        "Chains" : 3,
+        "Method" : "MLDA",
+        "Matrix" : "T"
+    },
+    "ModelConfig" : {
+        "DipoleType" : "Arbitrary",
+        "Dipoles" : [
+            [120,220,1.5],
+            [50,175,3],
+            [188,160,1],
+            [85,220,1.5],
+            [130,125,-1.5],
+            [85,90,-2],
+            [150,160,0.5]
+        ], 
+        "RelativeNoise" : 0.005
+    },
+    "Geometry" : {
+        "Dim" : 3,
+        "Conductivities" : [0.0000000001,0.00014,0.00033,0.00179,0.00042,0.00033],
+        "Center" : {
+            "x" : 128,
+            "y" : 128
+        },   
+        "Domain_x_Min": 0,
+        "Domain_x_Max": 256,
+        "Domain_y_Min": 0,
+        "Domain_y_Max": 256
+    },
+    "Sampling" : {
+        "ResultFile" : "mlda_meshes",
+        "NumSamples" : 10000,
+        "BurnIn" : 500,
+        "StartPoint" : {
+            "x" : 128,
+            "y" : 128,
+            "rho" : 0
+        },
+        "StartDomain" : {   
+            "x_Min": 30,
+            "x_Max": 200,
+            "y_Min": 70,
+            "y_Max": 220
+        },
+        "Levels" : ["Level2","Level4"]
+    },
+    "GeneralLevelConfig" : {
+        "MeshType" : "hex",
+        "SubchainLength" : "Random"
+        },
+    "Level1" : {
+        "ProposalVariance" : [16, 16, 0.4],
+        "Subsampling" : 10,
+        "VarFactor" : 16,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_32.npz",
+        "SourceModel" : "Venant",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m32.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
+    },
+    "Level2" : {
+        "ProposalVariance" : [16, 16, 0.4],
+        "Subsampling" : 10,
+        "VarFactor" : 16,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
+        "SourceModel" : "Venant",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m64.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
+    },
+    "Level3" : {
+        "ProposalVariance" : [16, 16, 0.4],
+        "Subsampling" : 10,
+        "VarFactor" : 16,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
+        "SourceModel" : "Venant",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m128.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
+    },
+    "Level4" : {
+        "VarFactor" : 1,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
+        "SourceModel" : "Venant",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
+    },
+    "Venant" : {
+        "type": "venant",
+        "numberOfMoments" : 2,
+        "referenceLength" : 20,
+        "weightingExponent" : 1,
+        "relaxationFactor" : 1e-6,
+        "mixedMoments" : "True",
+        "restrict" : "True",
+        "initialization" : "closest_vertex"
+    },
+    "Subtraction" : {
+        "type": "subtraction",
+        "intorderadd" : 2,
+        "intorderadd_lb" : 2
+    }
+}
+

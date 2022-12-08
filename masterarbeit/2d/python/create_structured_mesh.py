@@ -38,6 +38,7 @@ def structured_mesh(N, path, x_min, x_max, y_min, y_max, blurr):
 
     gray_probabilities = np.zeros((N,N), dtype=float)
 
+    # compute average of probabilities 
     for i in range(N):
         for j in range(N):
             for k in range(coarseness):
@@ -56,23 +57,24 @@ def structured_mesh(N, path, x_min, x_max, y_min, y_max, blurr):
             skull_prob[i,j] = skull_prob[i,j]/(coarseness**2)
             scalp_prob[i,j] = scalp_prob[i,j]/(coarseness**2)
 
+    # set labels
     gray_probs = np.zeros((N,N), dtype=float)
     labels = np.zeros((N,N), dtype=int)
     for i in range(N):
         for j in range(N):
-            gray_probs[j,i] = min(1,max(0,np.random.normal(gray_probabilities[i,j], blurr)))
+            gray_probs[i,j] = min(1,max(0,np.random.normal(gray_probabilities[i,j], blurr)))
             if white_prob[i,j]>0.5: 
-                labels[j,i]=1
+                labels[i,j]=1
             elif white_prob[i,j]+gray_prob[i,j]>0.5: 
-                labels[j,i]=2
+                labels[i,j]=2
             elif white_prob[i,j]+gray_prob[i,j]+csf_prob[i,j]>0.5: 
-                labels[j,i]=3
+                labels[i,j]=3
             elif white_prob[i,j]+gray_prob[i,j]+csf_prob[i,j]+skull_prob[i,j]>0.5: 
-                labels[j,i]=4
+                labels[i,j]=4
             elif white_prob[i,j]+gray_prob[i,j]+csf_prob[i,j]+skull_prob[i,j]+scalp_prob[i,j]>0.5: 
-                labels[j,i]=5
+                labels[i,j]=5
             else:
-                labels[j,i]=0
+                labels[i,j]=0
 
     nodes = nodes_array.astype(int)
     elements = elements.astype(int)

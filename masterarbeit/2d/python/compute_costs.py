@@ -15,9 +15,7 @@ import duneuropy as dp
 
 def compute_costs(parameters_path):    
     ##### READ CONFIG #####
-    # Get path to config file
-    parameters_path = sys.argv[1]
-    
+    # Get path to config file    
     # Read config file
     file = open(parameters_path)
     config = json.load(file)
@@ -36,30 +34,29 @@ def compute_costs(parameters_path):
     ##### SET DIPOLE #####
     # Dipole position is either read from the config or generated randomly
     s_ref = {}
-    for c in range(chains):
+    if config["Setup"]["Dipole"] == "Random":
+        mesh_ref = np.load(config["GeneralLevelConfig"]["Reference"]["Mesh"] if "Reference" in config["GeneralLevelConfig"] else config[config["Sampling"]["Levels"][-1]]["Mesh"])
+        while(True):
+            position = (utility_functions.get_random(config["Geometry"]["Domain_x_Min"],config["Geometry"]["Domain_x_Max"]),
+                    utility_functions.get_random(config["Geometry"]["Domain_y_Min"],config["Geometry"]["Domain_y_Max"]))
+            center_ref = utility_functions.find_next_center(mesh_ref,'hex',position)
+            if(mesh_ref['gray_probs'][int(center_ref[0]+mesh_ref['cells_per_dim']*center_ref[1])]>0.5):
+                break
+    else:
+        position = (config["ModelConfig"]["Dipoles"][0][0],config["ModelConfig"]["Dipoles"][0][1])
+
+    # Dipole orientation is either radial or given by the config or generated randomly
+    if dipole_type == 'Radial':
+        s_ref[0] = utility_functions.get_radial_dipole(position,center)
+    else:
         if config["Setup"]["Dipole"] == "Random":
-            mesh_ref = np.load(config["GeneralLevelConfig"]["Reference"]["Mesh"] if "Reference" in config["GeneralLevelConfig"] else config[config["Sampling"]["Levels"][-1]]["Mesh"])
-            while(True):
-                position = (utility_functions.get_random(config["Geometry"]["Domain_x_Min"],config["Geometry"]["Domain_x_Max"]),
-                        utility_functions.get_random(config["Geometry"]["Domain_y_Min"],config["Geometry"]["Domain_y_Max"]))
-                center_ref = utility_functions.find_next_center(mesh_ref,'hex',position)
-                if(mesh_ref['gray_probs'][int(center_ref[0]+mesh_ref['cells_per_dim']*center_ref[1])]>0.5):
-                    break
+            rho = utility_functions.get_random(0,2*math.pi)
         else:
-            position = (config["ModelConfig"]["Dipoles"][c][0],config["ModelConfig"]["Dipoles"][c][1])
+            rho = config["ModelConfig"]["Dipoles"][0][2]
 
-        # Dipole orientation is either radial or given by the config or generated randomly
-        if dipole_type == 'Radial':
-            s_ref[c] = utility_functions.get_radial_dipole(position,center)
-        else:
-            if config["Setup"]["Dipole"] == "Random":
-                rho = utility_functions.get_random(0,2*math.pi)
-            else:
-                rho = config["ModelConfig"]["Dipoles"][c][2]
-
-            print("Dipole:")
-            print(utility_functions.get_dipole(position,center,rho))
-            s_ref[c] = utility_functions.get_dipole(position,center,rho)
+        print("Dipole:")
+        print(utility_functions.get_dipole(position,center,rho))
+        s_ref[0] = utility_functions.get_dipole(position,center,rho)
 
     ##### COMPUTE REFERENCE SENSOR VALUES #####
     # Read configs yielding for all levels
@@ -68,12 +65,11 @@ def compute_costs(parameters_path):
     if "Reference" in general_level_config:
         b_ref_general = {}
         sigma_0_general = {}
-        for c in range(chains):
-            transfer_matrix = general_level_config["Reference"]["TransferMatrix"]
-            mesh = general_level_config["Reference"]["Mesh"]
-            source_model = general_level_config["Reference"]["SourceModel"]
-            config_source = config[source_model]
-            b_ref_general[c], sigma_0_general[c] = utility_functions.calc_disturbed_sensor_values(s_ref[c], transfer_matrix, mesh, conductivities, config_source, relative_noise)
+        transfer_matrix = general_level_config["Reference"]["TransferMatrix"]
+        mesh = general_level_config["Reference"]["Mesh"]
+        source_model = general_level_config["Reference"]["SourceModel"]
+        config_source = config[source_model]
+        b_ref_general[0], sigma_0_general[0] = utility_functions.calc_disturbed_sensor_values(s_ref[0], transfer_matrix, mesh, conductivities, config_source, relative_noise)
 
     ##### SET LEVEL DEPENDENT CONFIGS #####
     # Initialize dictionairies
@@ -111,10 +107,9 @@ def compute_costs(parameters_path):
         else:
             b_ref_c = {}
             sigma_c = {}
-            for c in range(chains):
-                config_source = config[config[level]["SourceModel"]]   
-                b_ref_c[c], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref[c], path_matrices[level], path_meshs[level], conductivities, config_source, relative_noise)
-                sigma_c[c] = var_factor[level]*sigma_0
+            config_source = config[config[level]["SourceModel"]]   
+            b_ref_c[0], sigma_0 = utility_functions.calc_disturbed_sensor_values(s_ref[0], path_matrices[level], path_meshs[level], conductivities, config_source, relative_noise)
+            sigma_c[0] = var_factor[level]*sigma_0
             b_ref[level] = b_ref_c
             sigma[level] = sigma_c
 
