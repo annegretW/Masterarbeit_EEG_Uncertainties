@@ -37,7 +37,7 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mh",
+        "ResultFile" : "mh_2",
         "NumSamples" : 200000,
         "BurnIn" : 15000,
         "StartPoint" : {
@@ -63,7 +63,7 @@
         }
     },
     "Level3_V" : {
-        "ProposalVariance" : [16, 16, 0.1],
+        "ProposalVariance" : [2, 2, 0.05],
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz",

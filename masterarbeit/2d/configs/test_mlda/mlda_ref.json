@@ -4,7 +4,7 @@
         "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mlda/",
         "Start" : "Fixed",
         "Dipole" : "Fixed",
-        "Chains" : 3,
+        "Chains" : 7,
         "Method" : "MLDA",
         "Matrix" : "T"
     },
@@ -35,8 +35,8 @@
     },
     "Sampling" : {
         "ResultFile" : "mlda",
-        "NumSamples" : 10000,
-        "BurnIn" : 500,
+        "NumSamples" : 20000,
+        "BurnIn" : 1000,
         "StartPoint" : {
             "x" : 128,
             "y" : 128,
@@ -55,8 +55,8 @@
         "SubchainLength" : "Random"
         },
     "Level1" : {
-        "ProposalVariance" : [32, 32, 0.4],
-        "Subsampling" : 15,
+        "ProposalVariance" : [8, 8, 0.1],
+        "Subsampling" : 11,
         "VarFactor" : 16,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
         "SourceModel" : "PartialIntegration",

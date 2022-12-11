@@ -22,7 +22,7 @@
             [195,170,0.1],
             [100,90,-0.9]
         ], 
-        "RelativeNoise" : 0.05
+        "RelativeNoise" : 0.005
     },
     "Geometry" : {
         "Dim" : 3,
@@ -37,7 +37,7 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mh",
+        "ResultFile" : "mh_128",
         "NumSamples" : 200000,
         "BurnIn" : 15000,
         "StartPoint" : {
@@ -57,13 +57,13 @@
         "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz",
         "MeshType" : "hex",
         "Reference" : {
-            "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
+            "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
             "SourceModel" : "Venant",
-            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz"
+            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m128.npz"
         }
     },
     "Level3_V" : {
-        "ProposalVariance" : [16, 16, 0.1],
+        "ProposalVariance" : [32, 32, 0.4],
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz",

@@ -5,6 +5,7 @@
 #include "MUQ/Utilities/AnyHelpers.h"
 
 #include <boost/foreach.hpp>
+#include <cmath>
 
 namespace pt = boost::property_tree;
 using namespace muq::Modeling;
@@ -50,7 +51,15 @@ std::shared_ptr<SamplingState> MHProposal::Sample(std::shared_ptr<SamplingState>
 
   Eigen::VectorXd prop = proposal->Sample();
   // std::cout << xc + prop << std::endl;
-  props.at(blockInd) = xc + prop;
+  Eigen::VectorXd newState = xc + prop;
+  //if(newState[0]<0){newState[0]=0;}
+  //else if(newState[0]>256){newState[0]=256;}
+  //if(newState[1]<0){newState[1]=0;}
+  //else if(newState[1]>256){newState[1]=256;}
+  //if(newState[2]<0){newState[2]=0;}
+  //else if(newState[2]>=2*M_PI){newState[2]=0;}
+
+  props.at(blockInd) = newState;
 
   // store the new state in the output
   return std::make_shared<SamplingState>(props, 1.0);
