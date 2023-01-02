@@ -4,7 +4,7 @@
         "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mlda/",
         "Start" : "Fixed",
         "Dipole" : "Fixed",
-        "Chains" : 5,
+        "Chains" : 4,
         "Method" : "MLDA",
         "Matrix" : "T"
     },
@@ -35,8 +35,8 @@
     },
     "Sampling" : {
         "ResultFile" : "mlda_test",
-        "NumSamples" : 20000,
-        "BurnIn" : 1000,
+        "NumSamples" : 100000,
+        "BurnIn" : 10000,
         "StartPoint" : {
             "x" : 128,
             "y" : 128,
@@ -55,13 +55,13 @@
         "SubchainLength" : "Random"
         },
     "Level1" : {
-        "ProposalVariance" : [32, 24, 0.1],
-        "Subsampling" : 11,
-        "VarFactor" : 24,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_32.npz",
-        "SourceModel" : "PartialIntegration",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e1_m32.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_1.npz"
+        "ProposalVariance" : [4,4,0.025],
+        "Subsampling" : 15,
+        "VarFactor" : 5,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
+        "SourceModel" : "Venant",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
     },
     "Level2" : {
         "VarFactor" : 1,

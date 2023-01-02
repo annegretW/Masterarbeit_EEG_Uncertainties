@@ -2,23 +2,20 @@
     "Setup" : {
         "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
         "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/",
-        "Start" : "Random",
-        "Dipole" : "Random",
-        "Chains" : 4,
+        "Start" : "Fixed",
+        "Dipole" : "Fixed",
+        "Chains" : 1,
         "Method" : "MLDA",
         "Matrix" : "T"
     },
     "ModelConfig" : {
-        "Dipole" : {
-            "Type" : "Arbitrary",
-            "Position" : {
-                "x" : 180,
-                "y" : 180
-            },
-            "Orientation" : {
-                "rho" : 1
-            }
-        }, 
+        "DipoleType" : "Arbitrary",
+        "Dipoles" : [
+            [220,85,1.5],
+            [185,160,1],
+            [130,128,5],
+            [85,95,4.5],
+            [160,150,0.5]], 
         "RelativeNoise" : 0.005
     },
     "Geometry" : {
@@ -34,9 +31,9 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mlda",
-        "NumSamples" : 10000,
-        "BurnIn" : 1000,
+        "ResultFile" : "mlda_test",
+        "NumSamples" : 2,
+        "BurnIn" : 0,
         "StartPoint" : {
             "x" : 128,
             "y" : 128,
@@ -48,95 +45,37 @@
             "y_Min": 70,
             "y_Max": 220
         },
-        "Levels" : ["Level1_V","Level2_V","Level3_V"]
+        "Levels" : ["Level1","Level2","Level3"]
     },
     "GeneralLevelConfig" : {
-        "MeshType" : "hex",
-        "Reference" : {
-            "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
-            "SourceModel" : "PartialIntegration",
-            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_64.npz"
-        }
-    },
-    "Level1_P" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 7, 
-        "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
-        "SourceModel" : "PartialIntegration",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_64.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
-    },
-    "Level2_P" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 3,
-        "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
-        "SourceModel" : "PartialIntegration",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_128.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
-    },
-    "Level3_P" : {
-        "Subsampling" : 2,
-        "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
-        "SourceModel" : "PartialIntegration",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
-    },
-    "Level1_V" : {
-        "ProposalVariance" : [8, 8, 0.1],
-        "Subsampling" : 7, 
-        "VarFactor" : 1,
+        "MeshType" : "hex"
+        },
+    "Level1" : {
+        "ProposalVariance" : [32, 32, 0.8],
+        "Subsampling" : 7,
+        "VarFactor" : 16,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
         "SourceModel" : "Venant",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_64.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_1.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
     },
-    "Level2_V" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 5,
-        "VarFactor" : 1,
+    "Level2" : {
+        "ProposalVariance" : [32, 32, 1],
+        "Subsampling" : 7,
+        "VarFactor" : 4,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
         "SourceModel" : "Venant",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_128.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_2.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
     },
-    "Level3_V" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 5,
+    "Level3" : {
+        "ProposalVariance" : [32, 32, 0.1],
+        "Subsampling" : 10,
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
         "SourceModel" : "Venant",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
-    },
-    "Level1_S" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 7, 
-        "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
-        "SourceModel" : "Subtraction",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_64.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
-    },
-    "Level2_S" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 5,
-        "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_128.npz",
-        "SourceModel" : "Subtraction",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_128.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
-    },
-    "Level3_S" : {
-        "ProposalVariance" : [16, 16, 0.2],
-        "Subsampling" : 5,
-        "VarFactor" : 1,
-        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
-        "SourceModel" : "Subtraction",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_realistic.npz"
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_3.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
     },
     "Venant" : {
         "type": "venant",

@@ -99,12 +99,14 @@ class EEGModelTransfer(umbridge.Model):
         self.transfer_matrix = {}
         self.meg_drivers = {}
         self.m = {}
+        self.w = {}
         self.tissue_probs = {}
         self.config = {}
         self.num_samples = {}
 
         # iterate through all levels
         for l in levels:
+            self.w[l] = config[l]["VarFactor"]*1e-3 
             self.num_samples[l] = np.zeros(config["Setup"]["Chains"])
             self.transfer_matrix[l] = np.load(transfer_path_list[l])['arr_0']
             
@@ -183,7 +185,7 @@ class EEGModelTransfer(umbridge.Model):
             meg_driver = dp.MEEGDriver2d(driver_config)
             self.meg_drivers[l] = meg_driver
 
-            self.m[l] = len(b_ref[l])
+            self.m[l] = len(b_ref[l][0])
 
         # reference values of measurement values
         self.b_ref = b_ref
@@ -210,11 +212,14 @@ class EEGModelTransfer(umbridge.Model):
 
     # Calculates the posterior probability of the source theta on a given level
     def posterior(self, theta, chain, level):
-        self.num_samples[level][chain] += 1
+        #if level=="Level3":
+        #    print(theta)
+
+        #self.num_samples[level][chain] += 1
 
         #if (math.sqrt((theta[0]-127)**2+(theta[1]-127)**2)>78):
         #    return -1e20
-        if(theta[0]<self.domain_x_min or theta[0]>self.domain_x_max or theta[1]<self.domain_y_min  or theta[1]>self.domain_y_max):
+        if(theta[0]<self.domain_x_min or theta[0]>self.domain_x_max or theta[1]<self.domain_y_min or theta[1]>self.domain_y_max):
             return -1e100
 
         if self.mode=='Radial':
@@ -232,13 +237,18 @@ class EEGModelTransfer(umbridge.Model):
         c = utility_functions.find_next_center(self.mesh[level],self.mesh_type[level],theta)
         tissue_prob = self.tissue_probs[level][int(c[0]+self.mesh[level]['cells_per_dim']*c[1])]
         #tissue_prob = 1
-        w = 1e-3 # level dependent
-        posterior = ((1-w)*tissue_prob+w)*((1/(2*self.sigma[level][chain]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level][chain]**2))*(np.linalg.norm(np.array(self.b_ref[level][chain])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level][chain]), 2))**2)
+        #w = 1e-3 # level dependent
+        #posterior = ((1-w)*tissue_prob+w)*((1/(2*math.pi*self.sigma[level][chain]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level][chain]**2))*(np.linalg.norm(np.array(self.b_ref[level][chain])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level][chain]), 2))**2)
+        #posterior = ((1-w)*tissue_prob+w)*((1/(2*math.pi*self.sigma[level][chain]**2))**(self.m[level]/2))*np.exp(-(1/(2*self.sigma[level][chain]**2))*(np.linalg.norm(np.array(self.b_ref[level][chain])-np.array(b), 2)/np.linalg.norm(np.array(self.b_ref[level][chain]), 2))**2)
+        log_posterior = np.log((1-self.w[level])*tissue_prob+self.w[level])+np.log((1/(2*math.pi*self.sigma[level][chain]**2))**(self.m[level]/2))+(-(1/(2*self.sigma[level][chain]**2))*(np.linalg.norm(np.array(self.b_ref[level][chain])-np.array(b), 2))**2)
+        
+        #if posterior==0:
+        #    print("Posterior = 0")
+        #    return -1e100
 
-        if posterior==0:
-           return -1e100
-
-        return np.log(posterior)
+        #return np.log(posterior)
+        #print(log_posterior)
+        return log_posterior
         
     def __call__(self, parameters, config):
         return [[self.posterior(parameters[0],config["chain"],config["level"])]]

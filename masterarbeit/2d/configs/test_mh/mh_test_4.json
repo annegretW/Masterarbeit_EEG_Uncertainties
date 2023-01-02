@@ -1,29 +1,26 @@
 {
     "Setup" : {
         "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
-        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_01",
+        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mh/",
         "Start" : "Fixed",
         "Dipole" : "Fixed",
-        "Chains" : 5,
+        "Chains" : 1,
         "Method" : "MCMC",
         "Matrix" : "T"
     },
     "ModelConfig" : {
         "DipoleType" : "Arbitrary",
         "Dipoles" : [
-            [185,160,1],
-            [220,85,1.5],
-            [130,128,5],
-            [85,95,4.5],
-            [160,150,0.5]], 
-        "RelativeNoise" : 0.005
+            [120,220,1.5]
+        ], 
+        "RelativeNoise" : 0.1
     },
     "Geometry" : {
         "Dim" : 3,
         "Conductivities" : [0.0000000001,0.00014,0.00033,0.00179,0.00042,0.00033],
         "Center" : {
-            "x" : 128,
-            "y" : 128
+            "x" : 127,
+            "y" : 127
         },
         "Domain_x_Min": 0,
         "Domain_x_Max": 256,
@@ -31,13 +28,13 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mh_01",
-        "NumSamples" : 1000000,
-        "BurnIn" : 250000,
+        "ResultFile" : "mh_10",
+        "NumSamples" : 200000,
+        "BurnIn" : 0,
         "StartPoint" : {
-            "x" : 128,
-            "y" : 128,
-            "rho" : 0
+            "x" : 120,
+            "y" : 220,
+            "rho" : 1.5
         },
         "StartDomain" : {   
             "x_Min": 30,
@@ -53,14 +50,14 @@
         "Reference" : {
             "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
             "SourceModel" : "Venant",
-            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz"
+            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz"
         }
     },
     "Level3_V" : {
-        "ProposalVariance" : [32, 32, 0.1],
+        "ProposalVariance" : [16, 16, 0.1],
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
-        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_realistic_hex_256.npz",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz",
         "SourceModel" : "Venant"
     },
     "Venant" : {

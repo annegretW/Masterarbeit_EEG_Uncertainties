@@ -75,10 +75,10 @@ def structured_mesh(N, path, x_min, x_max, y_min, y_max, blurr):
                 labels[i,j]=5
             else:
                 labels[i,j]=0
-
     nodes = nodes_array.astype(int)
     elements = elements.astype(int)
     gray_probs = np.ravel(gray_probs, order='F')
+    
     labels = np.ravel(labels, order='F').astype(int)
 
     centers = np.empty((N**2,2))

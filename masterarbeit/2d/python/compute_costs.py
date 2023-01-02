@@ -13,7 +13,7 @@ import sys
 sys.path.append(duneuropy_path)
 import duneuropy as dp
 
-def compute_costs(parameters_path):    
+def compute_costs(parameters_path, samples=1000):    
     ##### READ CONFIG #####
     # Get path to config file    
     # Read config file
@@ -125,11 +125,46 @@ def compute_costs(parameters_path):
 
     sec_per_sample = {}
     for level in levels:
+        print(testmodel.config[level])
+        b = np.random.rand(testmodel.m[level])
+        print(b)
         startTime = time.time()
-        samples = 1000
-        for i in range(samples):    
+
+        for i in range(samples):   
+            # Posterior 
             theta = np.array([np.random.uniform(low=0, high=255),np.random.uniform(low=0, high=255),np.random.uniform(low=0.0, high=2*math.pi)])
             testmodel.posterior(theta, 0, level)
+
+            '''if(theta[0]<testmodel.domain_x_min or theta[0]>testmodel.domain_x_max or theta[1]<testmodel.domain_y_min or theta[1]>testmodel.domain_y_max):
+                r = -1e100
+
+            if testmodel.mode=='Radial':
+                next_dipole = utility_functions.get_radial_dipole(theta[0:2], testmodel.center)
+
+            else:
+                next_dipole = utility_functions.get_dipole(theta[0:2], testmodel.center, theta[2])
+
+            #next_dipole = utility_functions.get_dipole(theta[0:2], testmodel.center, theta[2])
+            b = testmodel.meg_drivers[level].applyEEGTransfer(testmodel.transfer_matrix[level],[next_dipole],testmodel.config[level])[0]
+            #b = b_ref[level][0]
+            #c = [10,10]
+            c = utility_functions.find_next_center(testmodel.mesh[level],testmodel.mesh_type[level],theta)
+            tissue_prob = testmodel.tissue_probs[level][int(c[0]+testmodel.mesh[level]['cells_per_dim']*c[1])]
+            #tissue_prob = 1
+            w = 1e-3 # level dependent
+            posterior = ((1-w)*tissue_prob+w)*((1/(2*testmodel.sigma[level][0]**2))**(testmodel.m[level]/2))*np.exp(-(1/(2*testmodel.sigma[level][0]**2))*(np.linalg.norm(np.array(testmodel.b_ref[level][0])-np.array(b), 2)/np.linalg.norm(np.array(testmodel.b_ref[level][0]), 2))**2)
+            #posterior = 1
+            if posterior==0:
+                r = -1e100
+
+            r = np.log(posterior)'''
+            # Compute posterior distribution
+            # posterior = ((1-0.001)*0.9+0.001)*((1/(2*testmodel.sigma[level][0]**2))**(testmodel.m[level]/2))*np.exp(-(1/(2*testmodel.sigma[level][0]**2))*(np.linalg.norm(np.array(testmodel.b_ref[level][0])-np.array(b), 2)/np.linalg.norm(np.array(testmodel.b_ref[level][0]), 2))**2)
+
+            # RHS
+            # next_dipole = utility_functions.get_dipole(theta[0:2], testmodel.center, theta[2])
+            # b = testmodel.meg_drivers[level].applyEEGTransfer(testmodel.transfer_matrix[level],[next_dipole],testmodel.config[level])[0]
+
 
         executionTime = (time.time() - startTime)
         #print('Execution time on ' + level + ' in seconds: ' + str(executionTime))
@@ -141,6 +176,8 @@ if __name__ == "__main__":
     # Get path to config file
     parameters_path = sys.argv[1]
 
-    sec_per_sample = compute_costs(parameters_path)
+    samples = int(sys.argv[2])
+
+    sec_per_sample = compute_costs(parameters_path, samples)
     print(sec_per_sample)
 

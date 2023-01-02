@@ -62,6 +62,7 @@ def draw_cells(mesh_path, samples, ax, vmin=None, vmax=None):
         im = ax.tripcolor(mesh.points[:,0], mesh.points[:,1], triangles=mesh.cells_dict['triangle'], facecolors=colors, vmin=vmin, vmax=vmax)
         return im, vmin, vmax
 
+
 def draw_densities(samples, axis, vmin=None, vmax=None):
         contourf = {}
         if vmin!=None:
@@ -88,10 +89,13 @@ def draw_point(axis, point, alpha=1, facecolor="red"):
         axis.add_artist(
                 pt.Circle(point,3,facecolor=facecolor,alpha=alpha))
 
-def draw_dipole(axis, point):
+def draw_dipole(axis, point, color, length=10, width=10):
         orientation = utility_functions.get_dipole_orientation(2, point[2])
+        dx = orientation[0]/np.sqrt(orientation[0]**2+orientation[1]**2)*length
+        dy = orientation[1]/np.sqrt(orientation[0]**2+orientation[1]**2)*length
+
         axis.add_artist(
-                pt.Arrow(point,orientation))
+                pt.Arrow(point[0],point[1],dx,dy,width=width,color=color))
 
 
 def diagnostics(samples):
@@ -126,6 +130,15 @@ def burn_in_check(chain, tol=[10,10,0.5]):
     else:
         return True
 
+def check_results(chain, reference, tol=[10,10,0.5]):
+        if(abs(np.mean(chain[0])-reference[0])>tol[0]
+        or abs(np.mean(chain[1])-reference[1])>tol[1]
+        or abs(np.mean(chain[2])%(2*math.pi)-reference[2]%(2*math.pi))>tol[2]):
+                return False
+    
+        else:
+                return True
+
 # compute costs per sample on the finest level
 def costs_per_sample(config_path):
         costs = 0
@@ -141,13 +154,14 @@ def costs_per_sample(config_path):
         levels = config["Sampling"]["Levels"]
         samples = np.zeros(len(levels))
 
-        samples[-1] = config["Sampling"]["NumSamples"]
+        #samples[-1] = config["Sampling"]["NumSamples"]-config["Sampling"]["BurnIn"]
+        samples[-1] = 1
         for i in reversed(range(len(levels)-1)):
                 level = levels[i]
                 if(subchain_length=="Fixed"):
-                        samples[i] = (config[level]["Subsampling"]-1)*samples[i+1]
+                        samples[i] = (config[level]["Subsampling"])*samples[i+1]
                 else:
-                        samples[i] = (config[level]["Subsampling"]/2-1)*samples[i+1]
+                        samples[i] = ((config[level]["Subsampling"]-2)/2)*samples[i+1]
 
         print(samples)
 

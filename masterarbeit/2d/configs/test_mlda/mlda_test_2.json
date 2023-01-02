@@ -1,11 +1,11 @@
 {
     "Setup" : {
         "InputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/data/",
-        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mh/",
+        "OutputPath" : "/home/anne/Masterarbeit/masterarbeit/2d/results/test_mlda/",
         "Start" : "Fixed",
         "Dipole" : "Fixed",
         "Chains" : 10,
-        "Method" : "MCMC",
+        "Method" : "MLDA",
         "Matrix" : "T"
     },
     "ModelConfig" : {
@@ -37,9 +37,9 @@
         "Domain_y_Max": 256
     },
     "Sampling" : {
-        "ResultFile" : "mh_2",
-        "NumSamples" : 200000,
-        "BurnIn" : 15000,
+        "ResultFile" : "mlda_test_2",
+        "NumSamples" : 100000,
+        "BurnIn" : 10000,
         "StartPoint" : {
             "x" : 127,
             "y" : 127,
@@ -51,23 +51,28 @@
             "y_Min": 70,
             "y_Max": 220
         },
-        "Levels" : ["Level3_V"]
+        "Levels" : ["Level1","Level2"]
     },
     "GeneralLevelConfig" : {
-        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz",
-        "MeshType" : "hex",
-        "Reference" : {
-            "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
-            "SourceModel" : "Venant",
-            "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz"
-        }
+        "SubchainLength" : "Random",
+        "MeshType" : "hex"
+
     },
-    "Level3_V" : {
-        "ProposalVariance" : [2, 2, 0.05],
+    "Level1" : {
+        "ProposalVariance" : [4,4,0.025],
+        "Subsampling" : 20,
+        "VarFactor" : 5,
+        "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_64.npz",
+        "SourceModel" : "PartialIntegration",
+        "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e2_m64.npz",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_2.npz"
+    },
+    "Level2" : {
         "VarFactor" : 1,
         "Mesh" : "/home/anne/Masterarbeit/masterarbeit/2d/data/mesh_hex_256.npz",
         "TransferMatrix" : "/home/anne/Masterarbeit/masterarbeit/2d/data/transfer_matrix_e3_m256.npz",
-        "SourceModel" : "Venant"
+        "SourceModel" : "Venant",
+        "Electrodes" : "/home/anne/Masterarbeit/masterarbeit/2d/data/electrodes_3.npz"
     },
     "Venant" : {
         "type": "venant",
